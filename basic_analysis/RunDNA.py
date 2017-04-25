@@ -42,57 +42,6 @@ template_job = '{{\n\
                 }}'
 
 
-# def export_dna_se_input_params(pair, row, db_settings, preliminary_folder, indices, threads):
-#     uid = row[4]
-#     findex = row[2]
-#     control_id = row[14]
-#     basedir = os.path.join(preliminary_folder, uid)
-#
-#     input_parameters = {}
-#     input_parameters_path = os.path.join(basedir, uid + '.json')
-#
-#     if control_id:
-#         db_settings.cursor.execute("select libstatus from labdata where uid=%s", (control_id,))
-#         crow = db_settings.cursor.fetchone()
-#         if int(crow[0]) < 12 or int(crow[0]) > 100:
-#             raise BiowFileNotFoundException(uid, message="Control dataset has not been analyzed yet")
-#         util.add_param(input_parameters, id='control_file',
-#                                     value=os.path.join(basedir,uid+'.bam'),
-#                                     cwl_class="File",
-#                                     format='http://edamontology.org/format_2572')
-#
-#     if not util.file_exist(basedir, uid, 'fastq'):
-#         raise BiowFileNotFoundException(uid)
-#
-#     util.add_param(input_parameters, id='fastq_input_file',
-#                                 value=os.path.join(basedir, uid + '.fastq'),
-#                                 cwl_class="File",
-#                                 format='http://edamontology.org/format_1930')
-#
-#     util.add_param(input_parameters, id='bowtie_indices_folder',
-#                                 value=os.path.join(indices, findex), # TODO mm10 indices should be placed in mm10 folder with ln -s
-#                                 cwl_class="Directory")
-#
-#     util.add_param(input_parameters, id='clip_3p_end', value=int(row[8]))
-#     util.add_param(input_parameters, id='clip_5p_end', value=int(row[9]))
-#     util.add_param(input_parameters, id='threads', value=threads)
-#     util.add_param(input_parameters, id='remove_duplicates', value=(int(row[11]) == 1))
-#     util.add_param(input_parameters, id='exp_fragment_size', value=int(row[5]))
-#     util.add_param(input_parameters, id='force_fragment_size', value=(int(row[6]) == 1))
-#     util.add_param(input_parameters, id='broad_peak', value=(int(row[10]) == 2))
-#     util.add_param(input_parameters, id='chrom_length',
-#                                 value=os.path.join(basedir, findex, 'chrNameLength.txt'), # TODO Make ln -s on chrom_length into mm10 indices folder
-#                                 cwl_class="File",
-#                                 format='http://edamontology.org/format_2330')
-#     util.add_param(input_parameters, id='genome_size', value=row[12])
-#
-#     try:
-#         with open(input_parameters_path, 'w') as output_file:
-#             output_file.write(json.dumps(input_parameters, indent=4))
-#     except Exception as ex:
-#         raise BiowJobException(uid, message=str(ex))
-#     return input_parameters_path
-
 def get_control(uid, control_id, basedir, db_settings):
     if not control_id: return None
     db_settings.cursor.execute("select libstatus from labdata where uid=%s", (control_id,))
@@ -116,7 +65,7 @@ def make_job_file(pair, row, template_job, db_settings, preliminary_folder, indi
     if not util.file_exist(basedir, uid, 'fastq'):
         raise BiowFileNotFoundException(uid)
 
-    template_job = template_job.format(fastq_input_file=os.path.join(basedir, uid + '.fastq'),
+    filled_job = template_job.format(fastq_input_file=os.path.join(basedir, uid + '.fastq'),
                                        bowtie_indices_folder=os.path.join(indices, findex),
                                        clip_3p_end=int(row[8]),
                                        clip_5p_end=int(row[9]),
@@ -129,10 +78,10 @@ def make_job_file(pair, row, template_job, db_settings, preliminary_folder, indi
                                        genome_size=row[12],
                                        control_file=control_file
                                        )
-    util.remove_not_set_from_job(template_job)
+    util.remove_not_set_inputs(filled_job)
     try:
         with open(input_parameters_path, 'w') as output_file:
-            output_file.write(json.dumps(input_parameters, indent=4))
+            output_file.write(filled_job)
     except Exception as ex:
         raise BiowJobException(uid, message=str(ex))
     return input_parameters_path

@@ -393,5 +393,5 @@ def start_workflow (cwl_descriptor_path, input_parameters_path):
     cmd = "airflow-cwl-runner {0} {1}".format (cwl_descriptor_path, input_parameters_path)
     return subprocess.Popen(cmd, shell=False)
 
-def remove_not_set_from_job(template_job, key="None"):
+def remove_not_set_inputs(template_job, key="None"):
     return "\n".join(re.findall("?!"+key, template_job))
