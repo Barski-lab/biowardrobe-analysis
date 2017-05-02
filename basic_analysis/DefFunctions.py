@@ -35,10 +35,7 @@ import MySQLdb
 import warnings
 import string
 import subprocess
-from basic_analysis.exceptions import (BiowFileNotFoundException,
-                                       BiowBasicException,
-                                       BiowJobException,
-                                       BiowWorkflowException)
+
 
 def send_mail(toaddrs, body):
     fromaddr = 'biowrdrobe@biowardrobe.com'
@@ -379,19 +376,6 @@ def get_tasks (uid, airflow_db_settings):
         collected[state] = [task_id[0] for task_id in airflow_db_settings.cursor.fetchall()]
     return collected
 
-
-def still_running(uid, biow_db_settings, airflow_db_settings, proc):
-    if proc.returncode:
-        if proc.returncode < 0:
-            raise BiowWorkflowException(uid, message=get_tasks(uid, airflow_db_settings))
-        return False
-    else:
-        update_status(uid, get_tasks(uid, airflow_db_settings), 11, biow_db_settings)
-        return True
-
-def start_workflow (cwl_descriptor_path, input_parameters_path):
-    cmd = "airflow-cwl-runner {0} {1}".format (cwl_descriptor_path, input_parameters_path)
-    return subprocess.Popen(cmd, shell=False)
 
 def remove_not_set_inputs(template_job, key="None"):
     return "\n".join(re.findall("?!"+key, template_job))
