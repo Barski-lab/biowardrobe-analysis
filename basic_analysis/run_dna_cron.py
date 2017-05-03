@@ -7,25 +7,23 @@ import sys
 from basic_analysis.exceptions import BiowBasicException
 from basic_analysis.run_dna_func import submit_job
 
-
 biow_db_settings = biow_db_settings.Settings()
 
 WORKFLOW = 'run-dna-se.cwl'
-
-TEMPLATE_JOB = '{{\n\
-                  "fastq_input_file": {{"class": "File", "location": "{fastq_input_file}", "format": "http://edamontology.org/format_1930"}},\n\
-                  "bowtie_indices_folder": {{"class": "Directory", "location": "{bowtie_indices_folder}"}},\n\
-                  "clip_3p_end": {clip_3p_end},\n\
-                  "clip_5p_end": {clip_5p_end},\n\
-                  "threads": {threads},\n\
-                  "remove_duplicates": {remove_duplicates},\n\
-                  "control_file": {{"class": "File", "location": "{control_file}", "format": "http://edamontology.org/format_2572"}},\n\
-                  "exp_fragment_size": {exp_fragment_size},\n\
-                  "force_fragment_size": {force_fragment_size},\n\
-                  "broad_peak": {broad_peak},\n\
-                  "chrom_length": {{"class": "File", "location": "{chrom_length}", "format": "http://edamontology.org/format_2330"}},\n\
-                  "genome_size": "{genome_size}"\n\
-                }}'
+TEMPLATE_JOB = ('{{'
+                  '"fastq_input_file": {{"class": "File", "location": "{fastq_input_file}", "format": "http://edamontology.org/format_1930"}},'
+                  '"bowtie_indices_folder": {{"class": "Directory", "location": "{bowtie_indices_folder}"}},'
+                  '"clip_3p_end": {clip_3p_end},'
+                  '"clip_5p_end": {clip_5p_end},'
+                  '"threads": {threads},'
+                  '"remove_duplicates": "{remove_duplicates}",'
+                  '"control_file": {{"class": "File", "location": "{control_file}", "format": "http://edamontology.org/format_2572"}},'
+                  '"exp_fragment_size": {exp_fragment_size},'
+                  '"force_fragment_size": "{force_fragment_size}",'
+                  '"broad_peak": "{broad_peak}",'
+                  '"chrom_length": {{"class": "File", "location": "{chrom_length}", "format": "http://edamontology.org/format_2330"}},'
+                  '"genome_size": "{genome_size}"'
+                '}}')
 
 print str(datetime.datetime.now())
 
@@ -47,6 +45,7 @@ rows = biow_db_settings.cursor.fetchall()
 for row in rows:
     print "ROW: " + str(row)
     sys.stdout.flush()
+    
     try:
         submit_job (db_settings=biow_db_settings,
                        row=row,

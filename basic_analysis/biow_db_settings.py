@@ -92,4 +92,29 @@ class Settings:
         self.settings={}
         self.cursor.execute ("select * from settings")
         for (key,value,descr,stat,group) in self.cursor.fetchall():
+            if key in ['advanced','bin','indices','preliminary',\
+                       'temp','upload']:
+                value=value.lstrip('/')
             self.settings[key]=value
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

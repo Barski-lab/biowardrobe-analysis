@@ -1,5 +1,7 @@
 import os
+import json
 import DefFunctions as util
+import collections
 from basic_analysis.exceptions import BiowFileNotFoundException, BiowJobException
 
 
@@ -14,6 +16,8 @@ def get_control(db_settings, **kwargs):
 
 def submit_job(db_settings, row, raw_data, indices, workflow, template_job, threads, jobs_folder):
     """Generate and writes job file to a specific folder"""
+    jobs_folder = jobs_folder if os.path.isabs(jobs_folder) else os.path.join(os.getcwd(),jobs_folder)
+    workflow = os.path.splitext(os.path.basename(workflow))[0]
     kwargs = {
         "pair": ('pair' in row[0]),
         "genome_db": row[1],
@@ -34,12 +38,11 @@ def submit_job(db_settings, row, raw_data, indices, workflow, template_job, thre
         "template_job": template_job,
         "threads": threads
     }
-
     kwargs["fastq_input_file"] = os.path.join(kwargs["raw_data"], kwargs["uid"], kwargs["uid"] + '.fastq')
     kwargs["bowtie_indices_folder"] = os.path.join(kwargs["indices"], kwargs["genome"])
     kwargs["chrom_length"] = os.path.join(kwargs["raw_data"], kwargs["uid"], kwargs["genome"], 'chrNameLength.txt')
 
-    output_filename = os.path.join(jobs_folder, "new", kwargs["workflow"] + '-' + kwargs["uid"] + '.json')
+    output_filename = os.path.join(jobs_folder, kwargs["workflow"] + '-' + kwargs["uid"] + '.json')
 
     try:
         kwargs["control_file"] = get_control(db_settings, **kwargs)
@@ -48,11 +51,27 @@ def submit_job(db_settings, row, raw_data, indices, workflow, template_job, thre
 
     if not util.file_exist(os.path.join(kwargs['raw_data'],kwargs['uid']), kwargs["uid"], 'fastq'):
         raise BiowFileNotFoundException(kwargs["uid"])
-
-    filled_job = template_job.format(**kwargs)
-    # util.remove_not_set_inputs(filled_job)
+                                                        
+    filled_job_object = util.remove_not_set_inputs(json.loads(template_job.format(**kwargs)))                                  
+    filled_job_str = json.dumps(collections.OrderedDict(sorted(filled_job_object.items())),indent=4)
+     
     try:
         with open(output_filename, 'w') as output_file:
-            output_file.write(filled_job)
+            output_file.write(filled_job_str)
     except Exception as ex:
         raise BiowJobException(kwargs['uid'], message=str(ex))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

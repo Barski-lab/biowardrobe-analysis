@@ -35,6 +35,7 @@ import MySQLdb
 import warnings
 import string
 import subprocess
+import regex
 
 
 def send_mail(toaddrs, body):
@@ -361,7 +362,7 @@ def getFolderSize(folder):
 #================#
 
 def update_status (uid, message, code, db_settings):
-    db_settings.cursor.execute("update labdata set libstatustxt='%s',libstatus=%s where uid=%s",(message, code, uid))
+    db_settings.cursor.execute("update labdata set libstatustxt='{0}',libstatus={1} where uid='{2}'".format(message, code, uid))
     db_settings.conn.commit()
 
 
@@ -377,5 +378,32 @@ def get_tasks (uid, airflow_db_settings):
     return collected
 
 
-def remove_not_set_inputs(template_job, key="None"):
-    return "\n".join(re.findall("?!"+key, template_job))
+def recursive_check(item,monitor):
+    if not item or item=='null' or item=='None':
+        monitor["found_none"] = True
+    elif isinstance(item, dict):
+        dict((k, v) for k, v in item.iteritems() if recursive_check(v,monitor))
+    elif isinstance(item, list):
+        list(v for v in item.iteritems() if recursive_check(v,monitor))
+
+
+def complete_input(item):
+    monitor = {"found_none": False}
+    recursive_check(item,monitor)
+    return not monitor["found_none"]
+
+
+def remove_not_set_inputs(job_object):
+    job_object_filtered ={}
+    for key,value in job_object.iteritems():
+        if complete_input(value):
+            job_object_filtered[key]=value
+    return job_object_filtered
+
+
+
+
+
+
+
+
