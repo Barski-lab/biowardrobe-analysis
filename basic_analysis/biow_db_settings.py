@@ -22,71 +22,51 @@
 ##****************************************************************************/
 
 
-import os
-import sys
-from optparse import OptionParser
+import argparse
 import MySQLdb
+from typing import Text
 
-class WardrobeOptionParser(OptionParser):
-    def error(self, msg):
-        pass
-
-##
-## Class Settings provides some common functions and definitions of 
-## command line parameters
-##
-##
 class Settings:
-    db_host=""
-    db_user=""
-    db_pass=""
-    db_name=""
-    
+
+
+    def arg_parser(self):
+        parser = argparse.ArgumentParser(description='BioWardrobe settings parser for DB connection')
+        parser.add_argument("--wardrobe", type=Text, help="Wardrobe config file")
+        return parser
+
+
     def __init__(self):
-        self.argv=sys.argv
-        self.parser = WardrobeOptionParser()
-        self.parser.add_option("", "--wardrobe", action="store", type="string",
-                  dest="wardrobe", help="Wardrobe config file", metavar="<file>")
-        (self.opt, args) = self.parser.parse_args(self.argv)
-        self.wardrobe="/etc/wardrobe/wardrobe"
-        if self.opt.wardrobe is not None:
-            self.wardrobe=str(self.opt.wardrobe)
+        args, _ = self.arg_parser().parse_known_args()
+        def_conf = args.wardrobe if args.wardrobe else "/etc/wardrobe/wardrobe"
         try:
-            with open(self.wardrobe, 'r') as f:
-                for line in f:
-                    line=line.strip()
-                    if line.startswith("#") or len(line) == 0:
-                        continue
-                    if len(self.db_host) == 0:
-                        self.db_host=line
-                    elif len(self.db_user) == 0:
-                        self.db_user=line
-                    elif len(self.db_pass) == 0:
-                        self.db_pass=line
-                    elif len(self.db_name) == 0:
-                        self.db_name=line
-            f.closed
-        except IOError:
-            print "Cant open file "+str(self.wardrobe)
+            with open(def_conf, 'r') as conf_file:
+                config = [line.strip() for line in conf_file.readlines() if not line.startswith("#") and line.strip()]
+        except Exception:
+            print "Can't open file " + def_conf
             return
-        self.def_connect()
+        self.def_connect(config)
         self.get_settings()
 
-    def def_connect(self):
+
+    def def_connect(self,config):
         try:
-            self.conn = MySQLdb.connect (host = self.db_host,user = self.db_user, passwd=self.db_pass, db=self.db_name)
+            self.conn = MySQLdb.connect (host = config[0],
+                                         user = config[1],
+                                         passwd = config[2],
+                                         db = config[3])
             self.conn.set_character_set('utf8')
-            self.cursor = self.conn.cursor ()
-        except Exception, e: 
-            Error_str=str(e)
-            print("Error database connection"+Error_str)
+            self.cursor = self.conn.cursor()
+        except Exception as e:
+            print("Database connection error: " + str(e))
         return self.cursor
+
 
     def def_close(self):
         try:
             self.conn.close()
         except:
             pass
+
 
     def get_settings(self):
         self.settings={}
@@ -96,17 +76,6 @@ class Settings:
                        'temp','upload']:
                 value=value.lstrip('/')
             self.settings[key]=value
-
-
-
-
-
-
-
-
-
-
-
 
 
 

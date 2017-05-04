@@ -360,9 +360,10 @@ def getFolderSize(folder):
 #================#
 #      CWL       #
 #================#
+    
 
 def update_status (uid, message, code, db_settings):
-    db_settings.cursor.execute("update labdata set libstatustxt='{0}',libstatus={1} where uid='{2}'".format(message, code, uid))
+    db_settings.cursor.execute("update labdata set libstatustxt='{0}',libstatus={1} where uid='{2}'".format(message.replace("'", '"'), code, uid))
     db_settings.conn.commit()
 
 
