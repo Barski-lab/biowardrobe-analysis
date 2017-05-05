@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 import os
 import DefFunctions as util
-import biow_db_settings
+from basic_analysis import Settings
 import datetime
 import sys
 from basic_analysis.exceptions import BiowBasicException
 from basic_analysis.run_dna_func import submit_job
 
-biow_db_settings = biow_db_settings.Settings()
+biow_db_settings = Settings.Settings()
 
 WORKFLOW = 'run-dna-se.cwl'
 TEMPLATE_JOB = ('{{'
