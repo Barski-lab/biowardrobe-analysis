@@ -6,8 +6,10 @@ import datetime
 import sys
 from basic_analysis.exceptions import BiowBasicException
 from basic_analysis.run_dna_func import submit_job
-
+from basic_analysis.constants import LIBSTATUS
 biow_db_settings = Settings.Settings()
+biow_db_settings.cursor.execute ('use ems')
+
 
 WORKFLOW = 'run-dna-se.cwl'
 TEMPLATE_JOB = ('{{'
@@ -22,47 +24,45 @@ TEMPLATE_JOB = ('{{'
                   '"force_fragment_size": "{force_fragment_size}",'
                   '"broad_peak": "{broad_peak}",'
                   '"chrom_length": {{"class": "File", "location": "{chrom_length}", "format": "http://edamontology.org/format_2330"}},'
-                  '"genome_size": "{genome_size}"'
+                  '"genome_size": "{genome_size}",'
+                  '"output_folder": "{output_folder}",' # required
+                  '"uid": "{uid}"'                      # required
                 '}}')
 
 print str(datetime.datetime.now())
 
-biow_db_settings.cursor.execute(
-    "update labdata set libstatustxt='ready for process',libstatus=10 where libstatus=2 and experimenttype_id in (select id from experimenttype where etype like 'DNA%') "
-    " and COALESCE(egroup_id,'') <> '' and COALESCE(name4browser,'') <> '' and deleted=0 ")
-biow_db_settings.cursor.execute(
+biow_db_settings.cursor.execute((
+    "update labdata set libstatustxt='ready for process',libstatus={START_PROCESS} "
+    "where libstatus={SUCCESS_DOWNLOAD} and experimenttype_id in "
+    "(select id from experimenttype where etype like 'DNA%') "
+    "and COALESCE(egroup_id,'') <> '' and COALESCE(name4browser,'') <> '' and deleted=0 ").format(**LIBSTATUS))
+biow_db_settings.cursor.execute((
     "select e.etype,g.db,g.findex,g.annotation,l.uid,fragmentsizeexp,fragmentsizeforceuse,forcerun, "
-    "COALESCE(l.trim5,0), COALESCE(l.trim3,0),COALESCE(a.properties,0), COALESCE(l.rmdup,0),g.gsize, COALESCE(control,0), COALESCE(control_id,'') "
+    "COALESCE(l.trim5,0), COALESCE(l.trim3,0),COALESCE(a.properties,0), COALESCE(l.rmdup,0),g.gsize, "
+    "COALESCE(control,0), COALESCE(control_id,'') "
     "from labdata l "
     "inner join (experimenttype e,genome g ) ON (e.id=experimenttype_id and g.id=genome_id) "
     "LEFT JOIN (antibody a) ON (l.antibody_id=a.id) "
-    "where e.etype like 'DNA%' and libstatus in (10,1010) "
+    "where e.etype like 'DNA%' and libstatus in ({START_PROCESS},1010) "
     "and deleted=0 and COALESCE(egroup_id,'') <> '' and COALESCE(name4browser,'') <> '' "
-    " order by control DESC,dateadd limit 1")
+    " order by control DESC,dateadd").format(**LIBSTATUS))
 
 rows = biow_db_settings.cursor.fetchall()
 
 for row in rows:
     print "ROW: " + str(row)
     sys.stdout.flush()
-    
+
     try:
         submit_job (db_settings=biow_db_settings,
-                       row=row,
-                       raw_data=os.path.join(biow_db_settings.settings['wardrobe'], biow_db_settings.settings['preliminary']),
-                       indices=os.path.join(biow_db_settings.settings['wardrobe'], biow_db_settings.settings['indices']),
-                       workflow=WORKFLOW,
-                       template_job=TEMPLATE_JOB,
-                       threads=biow_db_settings.settings['maxthreads'],
-                       jobs_folder=sys.argv[1]) # sys.argv[1] - path where to save generated job files
+                   row=row,
+                   raw_data=os.path.join(biow_db_settings.settings['wardrobe'], biow_db_settings.settings['preliminary']),
+                   indices=os.path.join(biow_db_settings.settings['wardrobe'], biow_db_settings.settings['indices']),
+                   workflow=WORKFLOW,
+                   template_job=TEMPLATE_JOB,
+                   threads=biow_db_settings.settings['maxthreads'],
+                   jobs_folder=sys.argv[1]) # sys.argv[1] - path where to save generated job files
+        util.update_status(row[4], 'Processing', 11, biow_db_settings)
     except BiowBasicException as ex:
         util.submit_err (ex, biow_db_settings)
         continue
-
-
-
-
-
-
-
-    

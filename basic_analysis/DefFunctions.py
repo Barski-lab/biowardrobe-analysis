@@ -360,10 +360,10 @@ def getFolderSize(folder):
 #================#
 #      CWL       #
 #================#
-    
+
 
 def update_status (uid, message, code, db_settings):
-    db_settings.cursor.execute("update labdata set libstatustxt='{0}',libstatus={1} where uid='{2}'".format(message.replace("'", '"'), code, uid))
+    db_settings.cursor.execute("update labdata set libstatustxt='{0}',libstatus={1} where uid='{2}'".format(str(message).replace("'", '"'), code, uid))
     db_settings.conn.commit()
 
 
@@ -371,12 +371,19 @@ def submit_err(error, db_settings):
     update_status (error.uid, error.message, error.code, db_settings)
 
 
-def get_tasks (uid, airflow_db_settings):
+def get_last_dag_id (uid, db_settings):
+    db_settings.cursor.execute("select dag_id from task_instance where dag_id like '%{0}%'".format(uid))
+    dags = db_settings.cursor.fetchall()
+    return sorted([dag[0] for dag in dags])[-1] if dags else None
+
+
+def get_tasks (uid, db_settings):
+    db_settings.cursor.execute("select task_id, state from task_instance where dag_id='{0}'".format(get_last_dag_id(uid, db_settings)))
     collected = {}
-    for state in ['running', 'success', 'fail']:
-        airflow_db_settings.cursor.execute("select task_id from task_instance where dag_id like '%{0}%' and state='{1}'".format(uid,state))
-        collected[state] = [task_id[0] for task_id in airflow_db_settings.cursor.fetchall()]
-    return collected
+    tasks = db_settings.cursor.fetchall()
+    for state in ['queued','running','success','shutdown','failed','up_for_retry','upstream_failed','skipped']:
+        collected[state] = [task[0] for task in tasks if task[1]==state]
+    return collected, len(tasks)
 
 
 def recursive_check(item,monitor):
@@ -400,11 +407,3 @@ def remove_not_set_inputs(job_object):
         if complete_input(value):
             job_object_filtered[key]=value
     return job_object_filtered
-
-
-
-
-
-
-
-

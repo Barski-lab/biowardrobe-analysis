@@ -3,13 +3,13 @@ import json
 import DefFunctions as util
 import collections
 from basic_analysis.exceptions import BiowFileNotFoundException, BiowJobException
-
+from basic_analysis.constants import LIBSTATUS
 
 def get_control(db_settings, **kwargs):
     if not kwargs['control_id']: return None
     db_settings.cursor.execute("select libstatus from labdata where uid=%s", (kwargs['control_id'],))
-    crow = db_settings.cursor.fetchone()
-    if int(crow[0]) < 12 or int(crow[0]) > 100:
+    row = db_settings.cursor.fetchone()
+    if int(row[0]) != LIBSTATUS['SUCCESS_PROCESS']:
         raise BiowFileNotFoundException(kwargs['uid'], message="Control dataset has not been analyzed yet")
     return os.path.join(kwargs['raw_data'],kwargs['uid'],kwargs['uid']+'.bam')
 
@@ -41,6 +41,7 @@ def submit_job(db_settings, row, raw_data, indices, workflow, template_job, thre
     kwargs["fastq_input_file"] = os.path.join(kwargs["raw_data"], kwargs["uid"], kwargs["uid"] + '.fastq')
     kwargs["bowtie_indices_folder"] = os.path.join(kwargs["indices"], kwargs["genome"])
     kwargs["chrom_length"] = os.path.join(kwargs["raw_data"], kwargs["uid"], kwargs["genome"], 'chrNameLength.txt')
+    kwargs["output_folder"] = os.path.join(kwargs["raw_data"], kwargs["uid"])
 
     output_filename = os.path.join(jobs_folder, kwargs["workflow"] + '-' + kwargs["uid"] + '.json')
 
@@ -51,27 +52,12 @@ def submit_job(db_settings, row, raw_data, indices, workflow, template_job, thre
 
     if not util.file_exist(os.path.join(kwargs['raw_data'],kwargs['uid']), kwargs["uid"], 'fastq'):
         raise BiowFileNotFoundException(kwargs["uid"])
-                                                        
-    filled_job_object = util.remove_not_set_inputs(json.loads(template_job.format(**kwargs)))                                  
+
+    filled_job_object = util.remove_not_set_inputs(json.loads(template_job.format(**kwargs)))
     filled_job_str = json.dumps(collections.OrderedDict(sorted(filled_job_object.items())),indent=4)
-     
+
     try:
         with open(output_filename, 'w') as output_file:
             output_file.write(filled_job_str)
     except Exception as ex:
         raise BiowJobException(kwargs['uid'], message=str(ex))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
