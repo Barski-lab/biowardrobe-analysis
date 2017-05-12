@@ -12,3 +12,6 @@ LIBSTATUS = {
     "SUCCESS_PROCESS":   12,   # Processing succeed
     "PROCESSING":        11    # Processing
 }
+
+BOWTIE_INDICES = "BOWTIE"
+CHR_LENGTH = "chrNameLength.txt"

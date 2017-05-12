@@ -3,7 +3,7 @@ import json
 import DefFunctions as util
 import collections
 from basic_analysis.exceptions import BiowFileNotFoundException, BiowJobException
-from basic_analysis.constants import LIBSTATUS
+from basic_analysis.constants import LIBSTATUS, BOWTIE_INDICES, CHR_LENGTH
 
 def get_control(db_settings, **kwargs):
     if not kwargs['control_id']: return None
@@ -39,8 +39,8 @@ def submit_job(db_settings, row, raw_data, indices, workflow, template_job, thre
         "threads": threads
     }
     kwargs["fastq_input_file"] = os.path.join(kwargs["raw_data"], kwargs["uid"], kwargs["uid"] + '.fastq')
-    kwargs["bowtie_indices_folder"] = os.path.join(kwargs["indices"], kwargs["genome"])
-    kwargs["chrom_length"] = os.path.join(kwargs["raw_data"], kwargs["uid"], kwargs["genome"], 'chrNameLength.txt')
+    kwargs["bowtie_indices_folder"] = os.path.join(kwargs["indices"], BOWTIE_INDICES, kwargs["genome"])
+    kwargs["chrom_length"] = os.path.join(kwargs["raw_data"], kwargs["uid"], BOWTIE_INDICES, kwargs["genome"], CHR_LENGTH)
     kwargs["output_folder"] = os.path.join(kwargs["raw_data"], kwargs["uid"])
 
     output_filename = os.path.join(jobs_folder, kwargs["workflow"] + '-' + kwargs["uid"] + '.json')
