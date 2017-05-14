@@ -387,7 +387,7 @@ def get_tasks (uid, db_settings):
 
 
 def recursive_check(item,monitor):
-    if not item or item=='null' or item=='None':
+    if item=='null' or item=='None':
         monitor["found_none"] = True
     elif isinstance(item, dict):
         dict((k, v) for k, v in item.iteritems() if recursive_check(v,monitor))

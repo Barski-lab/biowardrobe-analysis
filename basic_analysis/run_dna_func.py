@@ -40,7 +40,7 @@ def submit_job(db_settings, row, raw_data, indices, workflow, template_job, thre
     }
     kwargs["fastq_input_file"] = os.path.join(kwargs["raw_data"], kwargs["uid"], kwargs["uid"] + '.fastq')
     kwargs["bowtie_indices_folder"] = os.path.join(kwargs["indices"], BOWTIE_INDICES, kwargs["genome"])
-    kwargs["chrom_length"] = os.path.join(kwargs["raw_data"], kwargs["uid"], BOWTIE_INDICES, kwargs["genome"], CHR_LENGTH)
+    kwargs["chrom_length"] = os.path.join(kwargs["indices"], BOWTIE_INDICES, kwargs["genome"], CHR_LENGTH)
     kwargs["output_folder"] = os.path.join(kwargs["raw_data"], kwargs["uid"])
 
     output_filename = os.path.join(jobs_folder, kwargs["workflow"] + '-' + kwargs["uid"] + '.json')
@@ -52,8 +52,7 @@ def submit_job(db_settings, row, raw_data, indices, workflow, template_job, thre
 
     if not util.file_exist(os.path.join(kwargs['raw_data'],kwargs['uid']), kwargs["uid"], 'fastq'):
         raise BiowFileNotFoundException(kwargs["uid"])
-
-    filled_job_object = util.remove_not_set_inputs(json.loads(template_job.format(**kwargs)))
+    filled_job_object = util.remove_not_set_inputs(json.loads(template_job.format(**kwargs).replace("'True'",'true').replace("'False'",'false').replace('"True"','true').replace('"False"','false')))
     filled_job_str = json.dumps(collections.OrderedDict(sorted(filled_job_object.items())),indent=4)
 
     try:
