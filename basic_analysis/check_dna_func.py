@@ -14,7 +14,7 @@ def check_job(db_settings, row):
     if not tasks: return (None, None)
     if tasks.get("failed"):
         raise BiowWorkflowException (row[1], message = tasks)
-    elif len(tasks.get("success")) == total:
+    elif total > 0 and len(tasks.get("success")) == total:
         return (LIBSTATUS["SUCCESS_PROCESS"], "Complete")
     else:
         return (LIBSTATUS["PROCESSING"], tasks)
