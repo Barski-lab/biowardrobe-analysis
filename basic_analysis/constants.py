@@ -14,4 +14,8 @@ LIBSTATUS = {
 }
 
 BOWTIE_INDICES = "BOWTIE"
+JOBS_NEW = 'new'
+JOBS_SUCCESS = 'success'
+JOBS_FAIL = 'fail'
+JOBS_RUNNING = 'running'
 CHR_LENGTH = "chrNameLength.txt"

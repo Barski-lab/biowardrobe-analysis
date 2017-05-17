@@ -36,7 +36,7 @@ import warnings
 import string
 import subprocess
 import regex
-
+from basic_analysis.exceptions import BiowJobException
 
 def send_mail(toaddrs, body):
     fromaddr = 'biowrdrobe@biowardrobe.com'
@@ -372,7 +372,7 @@ def submit_err(error, db_settings):
 
 
 def get_last_dag_id (uid, db_settings):
-    db_settings.cursor.execute("select dag_id from task_instance where dag_id like '%{0}%'".format(uid))
+    db_settings.cursor.execute("select dag_id from dag_run where dag_id like '%{0}%'".format(uid))
     dags = db_settings.cursor.fetchall()
     return sorted([dag[0] for dag in dags])[-1] if dags else None
 
@@ -384,6 +384,11 @@ def get_tasks (uid, db_settings):
     for state in ['queued','running','success','shutdown','failed','up_for_retry','upstream_failed','skipped']:
         collected[state] = [task[0] for task in tasks if task[1]==state]
     return collected, len(tasks)
+
+
+def check_if_duplicate_dag (uid, db_settings):
+    if bool(get_last_dag_id(uid, db_settings)):
+        raise BiowJobException(uid, message='Duplicate dag_id. Use ForceRun')
 
 
 def recursive_check(item,monitor):

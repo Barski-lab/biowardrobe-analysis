@@ -5,13 +5,12 @@ from basic_analysis import Settings
 import datetime
 import sys
 from basic_analysis.exceptions import BiowBasicException
-from basic_analysis.run_dna_func import submit_job
+from basic_analysis.run_dna_func import check_job, submit_job
 from basic_analysis.constants import LIBSTATUS
+
+
 biow_db_settings = Settings.Settings()
-biow_db_settings.cursor.execute ('use ems')
-
-
-WORKFLOW = 'run-dna-se.cwl'
+WORKFLOW = 'run-dna-single-end.cwl'
 TEMPLATE_JOB = ('{{'
                   '"fastq_input_file": {{"class": "File", "location": "{fastq_input_file}", "format": "http://edamontology.org/format_1930"}},'
                   '"bowtie_indices_folder": {{"class": "Directory", "location": "{bowtie_indices_folder}"}},'
@@ -29,8 +28,19 @@ TEMPLATE_JOB = ('{{'
                   '"uid": "{uid}"'                      # required
                 '}}')
 
+def use_ems():
+    biow_db_settings.cursor.execute ('use ems')
+
+def use_airflow():
+    biow_db_settings.cursor.execute ('use airflow')
+
+
+
 print str(datetime.datetime.now())
 
+# SUBMIT JOB
+
+use_ems()
 biow_db_settings.cursor.execute((
     "update labdata set libstatustxt='ready for process',libstatus={START_PROCESS} "
     "where libstatus={SUCCESS_DOWNLOAD} and experimenttype_id in "
@@ -52,8 +62,10 @@ rows = biow_db_settings.cursor.fetchall()
 for row in rows:
     print "ROW: " + str(row)
     sys.stdout.flush()
-
     try:
+        use_airflow()
+        util.check_if_duplicate_dag(row[4], biow_db_settings)
+        use_ems()
         submit_job (db_settings=biow_db_settings,
                    row=row,
                    raw_data=os.path.join(biow_db_settings.settings['wardrobe'], biow_db_settings.settings['preliminary']),
@@ -64,5 +76,36 @@ for row in rows:
                    jobs_folder=sys.argv[1]) # sys.argv[1] - path where to save generated job files
         util.update_status(row[4], 'Processing', 11, biow_db_settings)
     except BiowBasicException as ex:
+        use_ems()
         util.submit_err (ex, biow_db_settings)
         continue
+
+
+# CHECK STATUS
+use_ems()
+biow_db_settings.cursor.execute((
+    "select e.etype,l.uid,l.libstatustxt "
+    "from labdata l "
+    "inner join experimenttype e ON e.id=experimenttype_id "
+    "where e.etype like 'DNA%' and libstatus = {PROCESSING} "
+    "and deleted=0 and COALESCE(egroup_id,'') <> '' and COALESCE(name4browser,'') <> '' "
+    "order by control DESC,dateadd").format(**LIBSTATUS))
+
+rows = biow_db_settings.cursor.fetchall()
+
+for row in rows:
+    print "ROW: " + str(row)
+    try:
+        use_airflow()
+        libstatus, libstatustxt = check_job (db_settings=biow_db_settings,
+                                             row=row,
+                                             workflow=WORKFLOW,
+                                             jobs_folder=sys.argv[1])
+        if libstatus:
+            use_ems()
+            util.update_status(row[1], libstatustxt, libstatus, biow_db_settings)
+    except BiowBasicException as ex:
+        use_ems()
+        util.submit_err (ex, biow_db_settings)
+        continue
+
