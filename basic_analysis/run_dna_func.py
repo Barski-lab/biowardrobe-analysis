@@ -7,10 +7,12 @@ from basic_analysis.exceptions import (BiowFileNotFoundException,
                                        BiowWorkflowException)
 from basic_analysis.constants import (LIBSTATUS,
                                       BOWTIE_INDICES,
-                                      CHR_LENGTH,
+                                      CHR_LENGTH_GENERIC_TSV,
                                       JOBS_NEW,
                                       JOBS_RUNNING,
-                                      JOBS_FAIL)
+                                      JOBS_FAIL,
+                                      ANNOTATIONS,
+                                      ANNOTATION_GENERIC_TSV)
 
 
 def check_job(db_settings, row, workflow, jobs_folder):
@@ -64,7 +66,9 @@ def submit_job(db_settings, row, raw_data, indices, workflow, template_job, thre
     }
     kwargs["fastq_input_file"] = os.path.join(kwargs["raw_data"], kwargs["uid"], kwargs["uid"] + '.fastq')
     kwargs["bowtie_indices_folder"] = os.path.join(kwargs["indices"], BOWTIE_INDICES, kwargs["genome"])
-    kwargs["chrom_length"] = os.path.join(kwargs["indices"], BOWTIE_INDICES, kwargs["genome"], CHR_LENGTH)
+    kwargs["chrom_length"] = os.path.join(kwargs["indices"], BOWTIE_INDICES, kwargs["genome"], CHR_LENGTH_GENERIC_TSV)
+    kwargs["annotation_input_file"] = os.path.join(kwargs["indices"], ANNOTATIONS, kwargs["genome"],
+                                                   ANNOTATION_GENERIC_TSV)
     kwargs["output_folder"] = os.path.join(kwargs["raw_data"], kwargs["uid"])
 
     output_filename = os.path.join(jobs_folder, JOBS_NEW, kwargs["workflow"] + '-' + kwargs["uid"] + '.json')

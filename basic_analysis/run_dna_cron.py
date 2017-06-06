@@ -6,27 +6,11 @@ import datetime
 import sys
 from basic_analysis.exceptions import BiowBasicException
 from basic_analysis.run_dna_func import check_job, submit_job
-from basic_analysis.constants import LIBSTATUS
+from basic_analysis.constants import LIBSTATUS, CHIP_SEQ_SE_WORKFLOW, CHIP_SEQ_SE_TEMPLATE_JOB
 
 
 biow_db_settings = Settings.Settings()
-WORKFLOW = 'run-dna-single-end.cwl'
-TEMPLATE_JOB = ('{{'
-                  '"fastq_input_file": {{"class": "File", "location": "{fastq_input_file}", "format": "http://edamontology.org/format_1930"}},'
-                  '"bowtie_indices_folder": {{"class": "Directory", "location": "{bowtie_indices_folder}"}},'
-                  '"clip_3p_end": {clip_3p_end},'
-                  '"clip_5p_end": {clip_5p_end},'
-                  '"threads": {threads},'
-                  '"remove_duplicates": "{remove_duplicates}",'
-                  '"control_file": {{"class": "File", "location": "{control_file}", "format": "http://edamontology.org/format_2572"}},'
-                  '"exp_fragment_size": {exp_fragment_size},'
-                  '"force_fragment_size": "{force_fragment_size}",'
-                  '"broad_peak": "{broad_peak}",'
-                  '"chrom_length": {{"class": "File", "location": "{chrom_length}", "format": "http://edamontology.org/format_2330"}},'
-                  '"genome_size": "{genome_size}",'
-                  '"output_folder": "{output_folder}",' # required
-                  '"uid": "{uid}"'                      # required
-                '}}')
+
 
 def use_ems():
     biow_db_settings.cursor.execute ('use ems')
@@ -70,8 +54,8 @@ for row in rows:
                    row=row,
                    raw_data=os.path.join(biow_db_settings.settings['wardrobe'], biow_db_settings.settings['preliminary']),
                    indices=os.path.join(biow_db_settings.settings['wardrobe'], biow_db_settings.settings['indices']),
-                   workflow=WORKFLOW,
-                   template_job=TEMPLATE_JOB,
+                   workflow=CHIP_SEQ_SE_WORKFLOW,
+                   template_job=CHIP_SEQ_SE_TEMPLATE_JOB,
                    threads=biow_db_settings.settings['maxthreads'],
                    jobs_folder=sys.argv[1]) # sys.argv[1] - path where to save generated job files
         util.update_status(row[4], 'Processing', 11, biow_db_settings)
@@ -99,7 +83,7 @@ for row in rows:
         use_airflow()
         libstatus, libstatustxt = check_job (db_settings=biow_db_settings,
                                              row=row,
-                                             workflow=WORKFLOW,
+                                             workflow=CHIP_SEQ_SE_WORKFLOW,
                                              jobs_folder=sys.argv[1])
         if libstatus:
             use_ems()
