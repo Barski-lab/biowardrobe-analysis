@@ -34,8 +34,11 @@ will be marked as failed one
     wget --no-check-certificate https://bootstrap.pypa.io/get-pip.py
     sydo get-pip.py python
 ```
-    
-3. Install ***incubator-airflow*** in edit mode
+3. If you are planning to use MySQL DB insatall the following dependency
+```bash
+    sudo pip install mysql 
+```
+4. Install ***incubator-airflow*** in edit mode
 ```
     sudo pip install mysql
     cd incubator-airflow
@@ -55,12 +58,12 @@ will be marked as failed one
 >>```bash
 >>    sudo apt-get install python-dev
 >>```
-4. Install ***biowardrobe-analysis*** in edit mode
+5. Install ***biowardrobe-analysis*** in edit mode
 ```
     cd biowardrobe-analysis
     sudo pip install -e .
 ```
-5. Create the following folders
+6. Create the following folders
 ```bash
     mkdir -p ~/cwl/jobs/fail ~/cwl/jobs/new ~/cwl/jobs/running ~/cwl/jobs/success
     mkdir -p ~/cwl/output ~/cwl/tmp ~/cwl/workflows
@@ -76,8 +79,8 @@ will be marked as failed one
     ├── tmp
     └── workflows
 ```
-6. Move ***workflow*** repository to `~/cwl/workflows/`
-7. Update `~/airflow/airflow.cfg`
+7. Move ***workflow*** repository to `~/cwl/workflows/`
+8. Update `~/airflow/airflow.cfg`
 ```bash
 dags_folder = /home/biowardrobe/workspace/airflow/incubator-airflow/airflow/cwl_runner/cwl_dag/cwl_dag.py
 executor = LocalExecutor
@@ -95,15 +98,15 @@ log_level = INFO
 strict = False
 
 ```
-8. Create ***airflow*** database
+9. Create ***airflow*** database
 ```bash
     CREATE DATABSE AIRFLOW;
 ```
-9. Init airflow database
+10. Init airflow database
 ```bash
     airflow initdb
 ```
-10. Update crontab job
+11. Update crontab job
 ```
     ﻿#*/10 * * * *    . ~/.profile && /wardrobe/bin/RunDNA.py >> /wardrobe/tmp/RunDNA.log 2>&1
     */1 * * * *    . ~/.profile && /home/biowardrobe/workspace/airflow/biowardrobe-analysis/basic_analysis/run_dna_cron.py /home/biowardrobe/cwl/jobs >> /wardrobe/tmp/RunAirflowDNA.log 2>&1
