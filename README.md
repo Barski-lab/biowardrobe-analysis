@@ -110,7 +110,44 @@ strict = False
 ```bash
     airflow initdb
 ```
-13. Update crontab job
+13. [Install](https://linoxide.com/ubuntu-how-to/install-setup-docker-ubuntu-15-04/) ***Docker***
+- Install packages to allow apt to use a repository over HTTPS
+```bash
+    sudo apt-get install \
+        apt-transport-https \
+        ca-certificates \
+        curl \
+        software-properties-common
+```
+- Add Docker’s official GPG key
+```bash
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+```
+- Use the following command to set up the stable repository. You always need
+the stable repository, even if you want to install edge builds as well.
+```bash
+    sudo add-apt-repository \
+       "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+       $(lsb_release -cs) \
+       stable"
+```
+- Update the apt package index.
+```bash
+    sudo apt-get update
+```
+- Install the latest version of Docker
+```bash
+    sudo apt-get install docker.io
+```
+- Start doker service
+```bash
+    sudo service docker start
+```
+- Add current user to docker group
+```bash
+    sudo usermod -a -G docker biowardrobe
+```
+14. Update crontab job
 ```
     ﻿#*/10 * * * *    . ~/.profile && /wardrobe/bin/RunDNA.py >> /wardrobe/tmp/RunDNA.log 2>&1
     */1 * * * *    . ~/.profile && /home/biowardrobe/workspace/airflow/biowardrobe-analysis/basic_analysis/run_dna_cron.py /home/biowardrobe/cwl/jobs >> /wardrobe/tmp/RunAirflowDNA.log 2>&1
