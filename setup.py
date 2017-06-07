@@ -20,7 +20,8 @@ setup(
     license = 'Apache 2.0',
     packages=find_packages(),
     install_requires=[
-        'testing.mysqld'
+        'testing.mysqld',
+        'regex'
     ],
     zip_safe=False,
     cmdclass={'egg_info': tagger}
