@@ -362,8 +362,10 @@ def getFolderSize(folder):
 #================#
 
 
-def update_status (uid, message, code, db_settings):
-    db_settings.cursor.execute("update labdata set libstatustxt='{0}',libstatus={1} where uid='{2}'".format(str(message).replace("'", '"'), code, uid))
+def update_status (uid, message, code, db_settings, option_string=""):
+    if option_string and not option_string.startswith(','):
+        option_string = ',' + option_string
+    db_settings.cursor.execute("update labdata set libstatustxt='{0}', libstatus={1} {2} where uid='{3}'".format(str(message).replace("'", '"'), code, option_string, uid))
     db_settings.conn.commit()
 
 

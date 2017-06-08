@@ -36,7 +36,7 @@ def get_control(db_settings, **kwargs):
     db_settings.cursor.execute("select libstatus from labdata where uid=%s", (kwargs['control_id'],))
     row = db_settings.cursor.fetchone()
     if int(row[0]) != LIBSTATUS['SUCCESS_PROCESS']:
-        raise BiowFileNotFoundException(kwargs['uid'], message="Control dataset has not been analyzed yet")
+        raise BiowFileNotFoundException(kwargs['uid'], code=LIBSTATUS["SUCCESS_DOWNLOAD"], message="Control dataset has not been analyzed yet")
     return os.path.join(kwargs['raw_data'],kwargs['uid'],kwargs['uid']+'.bam')
 
 

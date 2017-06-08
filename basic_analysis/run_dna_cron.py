@@ -58,7 +58,7 @@ for row in rows:
                    template_job=CHIP_SEQ_SE_TEMPLATE_JOB,
                    threads=biow_db_settings.settings['maxthreads'],
                    jobs_folder=sys.argv[1]) # sys.argv[1] - path where to save generated job files
-        util.update_status(row[4], 'Processing', 11, biow_db_settings)
+        util.update_status(row[4], 'Processing', 11, biow_db_settings, "forcerun=0, dateanalyzes=now()")
     except BiowBasicException as ex:
         use_ems()
         util.submit_err (ex, biow_db_settings)
@@ -88,6 +88,8 @@ for row in rows:
         if libstatus:
             use_ems()
             util.update_status(row[1], libstatustxt, libstatus, biow_db_settings)
+            if libstatus==LIBSTATUS["SUCCESS_PROCESS"]:
+                util.update_status(row[1], libstatustxt, libstatus, biow_db_settings, "dateanalyzee=now()")
     except BiowBasicException as ex:
         use_ems()
         util.submit_err (ex, biow_db_settings)
