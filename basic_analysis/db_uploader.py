@@ -1,0 +1,106 @@
+import warnings
+import os
+import types
+import MySQLdb
+import string
+from biow_exceptions import BiowUploadException, BiowBasicException
+
+class BaseUploader:
+    def __init__(self, database_settings, func=None):
+        self.db_settings = database_settings
+        if func is not None:
+            self.execute = types.MethodType(func, self)
+
+
+def upload_results_to_db (upload_set, uid, raw_data, db_settings):
+    for key,value in upload_set.iteritems():
+        try:
+            BaseUploader(db_settings, value).execute(uid, os.path.join(raw_data, uid, key.format(uid)))
+        except Exception as ex:
+            # raise BiowUploadException (uid, message="Failed to upload " + key.format(uid) + " : " + str(ex))
+            raise BiowBasicException (uid=uid, code=2010, message="Test error")
+
+
+def upload_macs2_fragment_stat(self, uid, filename):
+    with open(filename, 'r') as input_file:
+        data = input_file.read().split('\t').append(uid)
+        print "Data: ", input_file.read()
+        self.db_settings.cursor.execute("update labdata set fragmentsize={},fragmentsizeest={},islandcount={} where uid={}".format(*data))
+        self.db_settings.conn.commit()
+
+def upload_iaintersect_result(self, uid, filename):
+    warnings.filterwarnings('ignore', category=MySQLdb.Warning)
+    table_name = self.db_settings.settings['experimentsdb'] + '.`' + uid + '_islands`'
+    self.db_settings.cursor.execute("select g.db from labdata l inner join genome g ON g.id=genome_id where uid=%s",uid)
+    db = self.settings.cursor.fetchone()
+    if not db:
+        # raise BiowUploadException(uid, message="DB not found")
+        raise BiowBasicException(uid=uid, code=2010, message="Test error")
+    gb_table_name = db + '.`' + string.replace(uid, "-", "_") + '_islands`'
+
+    self.db_settings.cursor.execute("DROP TABLE IF EXISTS " + table_name)
+    self.db_settings.cursor.execute("DROP TABLE IF EXISTS " + gb_table_name)
+
+    self.db_settings.cursor.execute(""" CREATE TABLE """ + table_name +
+                                    """ ( refseq_id VARCHAR(500) NULL,
+                                        gene_id VARCHAR(500) NULL,
+                                        txStart INT NULL,
+                                        txEnd INT NULL,
+                                        strand VARCHAR(1),
+                                        region VARCHAR(50),
+                                        chrom VARCHAR(255) NOT NULL,
+                                        start INT(10) UNSIGNED NOT NULL,
+                                        end INT(10) UNSIGNED NOT NULL,
+                                        length INT(10) UNSIGNED NOT NULL,
+                                        abssummit INT(10),
+                                        pileup FLOAT,
+                                        log10p FLOAT,
+                                        foldenrich FLOAT,
+                                        log10q FLOAT,
+                                        INDEX chrom_idx (chrom) USING BTREE,
+                                        INDEX start_idx (start) USING BTREE,
+                                        INDEX end_idx (end) USING BTREE,
+                                        INDEX region_idx (region ASC) USING BTREE,
+                                        INDEX txEnd_idx (txEnd ASC) USING BTREE,
+                                        INDEX txStart_idx (txStart ASC) USING BTREE,
+                                        INDEX gene_idx (gene_id(100) ASC) USING BTREE,
+                                        INDEX strand (strand ASC) USING BTREE,
+                                        INDEX refseq_idx (refseq_id(100) ASC) USING BTREE
+                                        ) ENGINE=MyISAM DEFAULT CHARSET=utf8 """)
+    self.db_settings.conn.commit()
+
+    self.db_settings.cursor.execute(""" CREATE TABLE """ + gb_table_name +
+                                    """ ( bin int(7) unsigned NOT NULL,
+                                        chrom varchar(255) NOT NULL,
+                                        chromStart int(10) unsigned NOT NULL,
+                                        chromEnd int(10) unsigned NOT NULL,
+                                        name varchar(255) NOT NULL,
+                                        score int(5) not null,
+                                        INDEX bin_idx (bin) using btree,
+                                        INDEX chrom_idx (chrom) using btree,
+                                        INDEX chrom_start_idx (chromStart) using btree,
+                                        INDEX chrom_end_idx (chromEnd) using btree
+                                        ) ENGINE=MyISAM DEFAULT CHARSET=utf8 """)
+    self.db_settings.conn.commit()
+
+    SQL = "INSERT INTO " + table_name + " (chrom,start,end,length,abssummit,pileup,log10p,foldenrich,log10q) VALUES"
+    with open(filename, 'r') as input_file:
+        for line in input_file:
+            if "gene_id" in line or "pileup" in line:
+                continue
+            self.db_settings.cursor.execute(SQL + " ({},{},{},{},{},{},{},{},{})".format(*line.strip().split('\t')))
+        self.db_settings.conn.commit()
+
+    self.db_settings.cursor.execute("""insert into  """ + gb_table_name +
+                   """ (bin, chrom, chromStart, chromEnd, name, score)
+                    select 0 as bin, chrom, start as chromStart, end as chromEnd,
+                    max(log10p) as name, max(log10q) as score
+                    from """ + table_name + """ group by chrom,start,end; """)
+    self.db_settings.conn.commit()
+
+
+CHIP_SEQ_SE_UPLOAD = {
+                        '{}_fragment_stat.tsv': upload_macs2_fragment_stat,
+                        '{}_macs_peaks_iaintersect.tsv': upload_iaintersect_result
+                     }
+

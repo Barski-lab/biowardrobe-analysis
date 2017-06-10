@@ -1,15 +1,16 @@
 #!/usr/bin/env python
 import os
-import DefFunctions as util
-from basic_analysis import Settings
+from DefFunctions import check_if_duplicate_dag, update_status, submit_err
+from Settings import Settings
 import datetime
 import sys
-from basic_analysis.exceptions import BiowBasicException
-from basic_analysis.run_dna_func import check_job, submit_job
-from basic_analysis.constants import LIBSTATUS, CHIP_SEQ_SE_WORKFLOW, CHIP_SEQ_SE_TEMPLATE_JOB
+from biow_exceptions import BiowBasicException
+from run_dna_func import check_job, submit_job
+from constants import LIBSTATUS, CHIP_SEQ_SE_WORKFLOW, CHIP_SEQ_SE_TEMPLATE_JOB
+from db_uploader import upload_results_to_db, CHIP_SEQ_SE_UPLOAD
 
 
-biow_db_settings = Settings.Settings()
+biow_db_settings = Settings()
 
 
 def use_ems():
@@ -17,7 +18,6 @@ def use_ems():
 
 def use_airflow():
     biow_db_settings.cursor.execute ('use airflow')
-
 
 
 print str(datetime.datetime.now())
@@ -48,7 +48,7 @@ for row in rows:
     sys.stdout.flush()
     try:
         use_airflow()
-        util.check_if_duplicate_dag(row[4], biow_db_settings)
+        check_if_duplicate_dag(row[4], biow_db_settings)
         use_ems()
         submit_job (db_settings=biow_db_settings,
                    row=row,
@@ -58,10 +58,10 @@ for row in rows:
                    template_job=CHIP_SEQ_SE_TEMPLATE_JOB,
                    threads=biow_db_settings.settings['maxthreads'],
                    jobs_folder=sys.argv[1]) # sys.argv[1] - path where to save generated job files
-        util.update_status(row[4], 'Processing', 11, biow_db_settings, "forcerun=0, dateanalyzes=now()")
+        update_status(row[4], 'Processing', 11, biow_db_settings, "forcerun=0, dateanalyzes=now()")
     except BiowBasicException as ex:
         use_ems()
-        util.submit_err (ex, biow_db_settings)
+        submit_err (ex, biow_db_settings)
         continue
 
 
@@ -87,11 +87,14 @@ for row in rows:
                                              jobs_folder=sys.argv[1])
         if libstatus:
             use_ems()
-            util.update_status(row[1], libstatustxt, libstatus, biow_db_settings)
+            update_status(row[1], libstatustxt, libstatus, biow_db_settings)
             if libstatus==LIBSTATUS["SUCCESS_PROCESS"]:
-                util.update_status(row[1], libstatustxt, libstatus, biow_db_settings, "dateanalyzee=now()")
+                update_status(row[1], libstatustxt, libstatus, biow_db_settings, "dateanalyzee=now()")
+                upload_results_to_db(upload_set=CHIP_SEQ_SE_UPLOAD,
+                                     uid=row[1],
+                                     raw_data=os.path.join(biow_db_settings.settings['wardrobe'], biow_db_settings.settings['preliminary']),
+                                     db_settings=biow_db_settings)
     except BiowBasicException as ex:
         use_ems()
-        util.submit_err (ex, biow_db_settings)
+        submit_err (ex, biow_db_settings)
         continue
-

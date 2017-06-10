@@ -1,4 +1,4 @@
-from basic_analysis.constants import LIBSTATUS
+from constants import LIBSTATUS
 
 
 class BiowBasicException(Exception):
@@ -18,7 +18,6 @@ class BiowFileNotFoundException(BiowBasicException):
         self.message = message if message else "File not found for {0}".format(uid)
         super(BiowFileNotFoundException, self).__init__(self.uid, self.code, self.message)
 
-
 class BiowJobException(BiowBasicException):
     """Failed to generate input parameters file BioWardrobe exception class"""
     def __init__(self, uid, code=None, message=None):
@@ -27,6 +26,13 @@ class BiowJobException(BiowBasicException):
         self.message = message if message else "Failed to generate input parameters file for {0}".format(uid)
         super(BiowJobException, self).__init__(self.uid, self.code, self.message)
 
+class BiowUploadException(BiowBasicException):
+    """Failed to upload data to Biowardrobe DB"""
+    def __init__(self, uid, code=None, message=None):
+        self.uid = uid
+        self.code = code if code else LIBSTATUS["FAIL_PROCESS"]
+        self.message = message if message else "Failed to upload results to DB for {0}".format(uid)
+        super(BiowJobException, self).__init__(self.uid, self.code, self.message)
 
 class BiowWorkflowException(BiowBasicException):
     """Failed to run workflow BioWardrobe exception class"""

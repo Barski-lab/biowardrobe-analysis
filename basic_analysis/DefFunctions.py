@@ -36,7 +36,7 @@ import warnings
 import string
 import subprocess
 import regex
-from basic_analysis.exceptions import BiowJobException
+from biow_exceptions import BiowJobException
 
 def send_mail(toaddrs, body):
     fromaddr = 'biowrdrobe@biowardrobe.com'

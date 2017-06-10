@@ -1,22 +1,22 @@
 import os
 import json
-import DefFunctions as util
+from DefFunctions import get_tasks, file_exist, remove_not_set_inputs
 import collections
-from basic_analysis.exceptions import (BiowFileNotFoundException,
-                                       BiowJobException,
-                                       BiowWorkflowException)
-from basic_analysis.constants import (LIBSTATUS,
-                                      BOWTIE_INDICES,
-                                      CHR_LENGTH_GENERIC_TSV,
-                                      JOBS_NEW,
-                                      JOBS_RUNNING,
-                                      JOBS_FAIL,
-                                      ANNOTATIONS,
-                                      ANNOTATION_GENERIC_TSV)
+from biow_exceptions import (BiowFileNotFoundException,
+                             BiowJobException,
+                             BiowWorkflowException)
+from constants import (LIBSTATUS,
+                       BOWTIE_INDICES,
+                       CHR_LENGTH_GENERIC_TSV,
+                       JOBS_NEW,
+                       JOBS_RUNNING,
+                       JOBS_FAIL,
+                       ANNOTATIONS,
+                       ANNOTATION_GENERIC_TSV)
 
 
 def check_job(db_settings, row, workflow, jobs_folder):
-    tasks, total = util.get_tasks(row[1], db_settings)
+    tasks, total = get_tasks(row[1], db_settings)
     tasks = {k: v for k,v in tasks.iteritems() if v}
     if not tasks:
         failed_file = os.path.join(jobs_folder, JOBS_FAIL, os.path.splitext(os.path.basename(workflow))[0] + '-' + row[1] + '.json')
@@ -79,9 +79,9 @@ def submit_job(db_settings, row, raw_data, indices, workflow, template_job, thre
     except BiowFileNotFoundException:
         raise
 
-    if not util.file_exist(os.path.join(kwargs['raw_data'],kwargs['uid']), kwargs["uid"], 'fastq'):
+    if not file_exist(os.path.join(kwargs['raw_data'],kwargs['uid']), kwargs["uid"], 'fastq'):
         raise BiowFileNotFoundException(kwargs["uid"])
-    filled_job_object = util.remove_not_set_inputs(json.loads(template_job.format(**kwargs).replace("'True'",'true').replace("'False'",'false').replace('"True"','true').replace('"False"','false')))
+    filled_job_object = remove_not_set_inputs(json.loads(template_job.format(**kwargs).replace("'True'",'true').replace("'False'",'false').replace('"True"','true').replace('"False"','false')))
     filled_job_str = json.dumps(collections.OrderedDict(sorted(filled_job_object.items())),indent=4)
 
     # Check if file exists in job folder (running or new)
