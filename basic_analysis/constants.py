@@ -1,6 +1,4 @@
 
-# libstatus values
-
 LIBSTATUS = {
     "START_DOWNLOAD":    0,    # Start downloading
     "FAIL_DOWNLOAD":     2000, # Downloading error
@@ -41,3 +39,5 @@ CHIP_SEQ_SE_TEMPLATE_JOB = ('{{'
                   '"output_folder": "{output_folder}",' # required
                   '"uid": "{uid}"'                      # required
                 '}}')
+
+

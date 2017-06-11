@@ -3,7 +3,7 @@ import os
 import types
 import MySQLdb
 import string
-from biow_exceptions import BiowUploadException, BiowBasicException
+from biow_exceptions import BiowUploadException
 
 class BaseUploader:
     def __init__(self, database_settings, func=None):
@@ -17,8 +17,7 @@ def upload_results_to_db (upload_set, uid, raw_data, db_settings):
         try:
             BaseUploader(db_settings, value).execute(uid, os.path.join(raw_data, uid, key.format(uid)))
         except Exception as ex:
-            # raise BiowUploadException (uid, message="Failed to upload " + key.format(uid) + " : " + str(ex))
-            raise BiowBasicException (uid=uid, code=2010, message=str(ex))
+            raise BiowUploadException (uid, message="Failed to upload " + key.format(uid) + " : " + str(ex))
 
 
 def upload_macs2_fragment_stat(self, uid, filename):
@@ -35,8 +34,7 @@ def upload_iaintersect_result(self, uid, filename):
     self.db_settings.cursor.execute("select g.db from labdata l inner join genome g ON g.id=genome_id where uid=%s", (uid,))
     db_tuple = self.db_settings.cursor.fetchone()
     if not db_tuple:
-        # raise BiowUploadException(uid, message="DB not found")
-        raise BiowBasicException(uid=uid, code=2010, message="Test error")
+        raise BiowUploadException(uid, message="DB not found")
     gb_table_name = db_tuple[0] + '.`' + string.replace(uid, "-", "_") + '_islands`'
 
     self.db_settings.cursor.execute("DROP TABLE IF EXISTS " + table_name)
@@ -161,4 +159,3 @@ CHIP_SEQ_SE_UPLOAD = {
                         'set_dateanalyzed': upload_dateanalyzed,
                         'upload_folder_size': upload_folder_size
                      }
-
