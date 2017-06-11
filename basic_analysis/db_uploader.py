@@ -18,25 +18,26 @@ def upload_results_to_db (upload_set, uid, raw_data, db_settings):
             BaseUploader(db_settings, value).execute(uid, os.path.join(raw_data, uid, key.format(uid)))
         except Exception as ex:
             # raise BiowUploadException (uid, message="Failed to upload " + key.format(uid) + " : " + str(ex))
-            raise BiowBasicException (uid=uid, code=2010, message="Test error")
+            raise BiowBasicException (uid=uid, code=2010, message=str(ex))
 
 
 def upload_macs2_fragment_stat(self, uid, filename):
     with open(filename, 'r') as input_file:
-        data = input_file.read().split('\t').append(uid)
-        print "Data: ", input_file.read()
-        self.db_settings.cursor.execute("update labdata set fragmentsize={},fragmentsizeest={},islandcount={} where uid={}".format(*data))
+        data = input_file.read().strip().split()
+        data.append(uid)
+        self.db_settings.cursor.execute("update labdata set fragmentsize=%s,fragmentsizeest=%s,islandcount=%s where uid=%s", tuple(data))
         self.db_settings.conn.commit()
+
 
 def upload_iaintersect_result(self, uid, filename):
     warnings.filterwarnings('ignore', category=MySQLdb.Warning)
     table_name = self.db_settings.settings['experimentsdb'] + '.`' + uid + '_islands`'
-    self.db_settings.cursor.execute("select g.db from labdata l inner join genome g ON g.id=genome_id where uid=%s",uid)
-    db = self.settings.cursor.fetchone()
-    if not db:
+    self.db_settings.cursor.execute("select g.db from labdata l inner join genome g ON g.id=genome_id where uid=%s", (uid,))
+    db_tuple = self.db_settings.cursor.fetchone()
+    if not db_tuple:
         # raise BiowUploadException(uid, message="DB not found")
         raise BiowBasicException(uid=uid, code=2010, message="Test error")
-    gb_table_name = db + '.`' + string.replace(uid, "-", "_") + '_islands`'
+    gb_table_name = db_tuple[0] + '.`' + string.replace(uid, "-", "_") + '_islands`'
 
     self.db_settings.cursor.execute("DROP TABLE IF EXISTS " + table_name)
     self.db_settings.cursor.execute("DROP TABLE IF EXISTS " + gb_table_name)
@@ -83,12 +84,14 @@ def upload_iaintersect_result(self, uid, filename):
                                         ) ENGINE=MyISAM DEFAULT CHARSET=utf8 """)
     self.db_settings.conn.commit()
 
-    SQL = "INSERT INTO " + table_name + " (chrom,start,end,length,abssummit,pileup,log10p,foldenrich,log10q) VALUES"
+    SQL = "INSERT INTO " + table_name + " (refseq_id,gene_id,txStart,txEnd,strand,chrom,start,end,length,abssummit,pileup,log10p,foldenrich,log10q,region) VALUES"
     with open(filename, 'r') as input_file:
-        for line in input_file:
-            if "gene_id" in line or "pileup" in line:
+        for line in input_file.readlines():
+            line = line.strip()
+            if not line or "gene_id" in line or "pileup" in line:
                 continue
-            self.db_settings.cursor.execute(SQL + " ({},{},{},{},{},{},{},{},{})".format(*line.strip().split('\t')))
+            line_splitted = [None if item=="NULL" else item for item in line.split()]
+            self.db_settings.cursor.execute(SQL + " (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)", tuple(line_splitted))
         self.db_settings.conn.commit()
 
     self.db_settings.cursor.execute("""insert into  """ + gb_table_name +
@@ -98,9 +101,64 @@ def upload_iaintersect_result(self, uid, filename):
                     from """ + table_name + """ group by chrom,start,end; """)
     self.db_settings.conn.commit()
 
+    self.db_settings.cursor.execute(
+        """update labdata set params='{"promoter":1000}' where uid=%s""", (uid,))
+    self.db_settings.conn.commit()
+
+
+def upload_get_stat (self, uid, filename):
+    with open(filename, 'r') as input_file:
+        data = input_file.read().strip().split()
+        # TOTAL, ALIGNED, SUPRESSED, USED
+        data.append(uid)
+        self.db_settings.cursor.execute(
+            "update labdata set tagstotal=%s,tagsmapped=%s,tagsribo=%s,tagssuppressed=%s,tagsused=%s where uid=%s",
+            (data[0], data[1], data[2], data[2], data[3], data[4]))
+        self.db_settings.conn.commit()
+
+
+def upload_atdp(self, uid, filename):
+    warnings.filterwarnings('ignore', category=MySQLdb.Warning)
+    table_name = self.db_settings.settings['experimentsdb'] + '.`' + uid + '_atdp`'
+    self.db_settings.cursor.execute("DROP TABLE IF EXISTS " + table_name)
+    self.db_settings.conn.commit()
+    self.db_settings.cursor.execute(""" CREATE TABLE """ + table_name +
+                                    """ ( X INT NULL,
+                                        Y FLOAT NULL,
+                                        INDEX X_idx (X) USING BTREE
+                                        ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT = 'created by atdp' """)
+    self.db_settings.conn.commit()
+    SQL = "INSERT INTO " + table_name + " (X,Y) VALUES"
+    with open(filename, 'r') as input_file:
+        for line in input_file.readlines():
+            line = line.strip()
+            if not line or "X" in line or "Y" in line:
+                continue
+            self.db_settings.cursor.execute(SQL + " (%s,%s)", tuple(line.split()))
+        self.db_settings.conn.commit()
+
+
+def upload_dateanalyzed(self, uid, filename):
+    self.db_settings.cursor.execute("update labdata set dateanalyzed=now() where uid=%s and dateanalyzed is null", (uid,))
+    self.db_settings.conn.commit()
+
+
+def upload_folder_size(self, uid, filename):
+    total_size = 0
+    for root, dirs, files in os.walk(os.path.dirname(filename)):
+        for f in files:
+            fp = os.path.join(root, f)
+            total_size += os.path.getsize(fp)
+    self.db_settings.cursor.execute("update labdata set size = %s where uid=%s", (int(total_size)/1024.0,uid))
+    self.db_settings.conn.commit()
+
 
 CHIP_SEQ_SE_UPLOAD = {
                         '{}_fragment_stat.tsv': upload_macs2_fragment_stat,
-                        '{}_macs_peaks_iaintersect.tsv': upload_iaintersect_result
+                        '{}_macs_peaks_iaintersect.tsv': upload_iaintersect_result,
+                        '{}.stat': upload_get_stat,
+                        '{}_atdp.tsv': upload_atdp,
+                        'set_dateanalyzed': upload_dateanalyzed,
+                        'upload_folder_size': upload_folder_size
                      }
 
