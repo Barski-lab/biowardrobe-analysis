@@ -25,9 +25,9 @@ ANNOTATION_GENERIC_TSV = "refgene.tsv"
 # CHiP-Seq single end
 CHIP_SEQ_SE_WORKFLOW = 'chipseq-se.cwl'
 CHIP_SEQ_SE_TEMPLATE_JOB = ('{{'
-                  '"fastq_input_file": {{"class": "File", "location": "{fastq_input_file}", "format": "http://edamontology.org/format_1930"}},'
-                  '"bowtie_indices_folder": {{"class": "Directory", "location": "{bowtie_indices_folder}"}},'
-                  '"annotation_input_file": {{"class": "File", "location": "{annotation_input_file}", "format": "http://edamontology.org/format_3475"}},'
+                  '"fastq_file": {{"class": "File", "location": "{fastq_input_file}", "format": "http://edamontology.org/format_1930"}},'
+                  '"indices_folder": {{"class": "Directory", "location": "{bowtie_indices_folder}"}},'
+                  '"annotation_file": {{"class": "File", "location": "{annotation_input_file}", "format": "http://edamontology.org/format_3475"}},'
                   '"clip_3p_end": {clip_3p_end},'
                   '"clip_5p_end": {clip_5p_end},'
                   '"threads": {threads},'
