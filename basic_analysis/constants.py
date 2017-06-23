@@ -40,4 +40,6 @@ CHIP_SEQ_SE_TEMPLATE_JOB = ('{{'
                   '"uid": "{uid}"'                      # required
                 '}}')
 
-
+# strand
+UPSTREAM = "+"
+DOWNSTREAM = "-"

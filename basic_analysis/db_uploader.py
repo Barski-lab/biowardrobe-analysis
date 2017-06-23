@@ -4,6 +4,7 @@ import types
 import MySQLdb
 import string
 from biow_exceptions import BiowUploadException
+from constants import UPSTREAM, DOWNSTREAM
 
 class BaseUploader:
     def __init__(self, database_settings, func=None):
@@ -136,6 +137,31 @@ def upload_atdp(self, uid, filename):
         self.db_settings.conn.commit()
 
 
+def upload_bigwig (self, uid, filename, strand=None):
+    self.db_settings.cursor.execute("SELECT g.db FROM labdata l INNER JOIN genome g ON g.id=genome_id WHERE uid=%s", (uid,))
+    db_tuple = self.db_settings.cursor.fetchone()
+    if not db_tuple:
+        raise BiowUploadException(uid, message="DB not found")
+    gb_bigwig_table_name = {
+        UPSTREAM: db_tuple[0] + '.`' + string.replace(uid, "-", "_") + '_upstream_wtrack`',
+        DOWNSTREAM: db_tuple[0] + '.`' + string.replace(uid, "-", "_") + '_downstream_wtrack`',
+        None: db_tuple[0] + '.`' + string.replace(uid, "-", "_") + '_wtrack`'
+    }[strand]
+    self.db_settings.cursor.execute(" DROP TABLE IF EXISTS " + gb_bigwig_table_name)
+    self.db_settings.cursor.execute(" CREATE TABLE " + gb_bigwig_table_name +
+                                    " (fileName VARCHAR(255) not NULL) ENGINE=MyISAM DEFAULT CHARSET=utf8")
+    self.db_settings.cursor.execute(" INSERT INTO " + gb_bigwig_table_name + "VALUES (%s)", (filename,))
+    self.db_settings.conn.commit()
+
+
+def upload_bigwig_upstream (self, uid, filename):
+     upload_bigwig (self, uid, filename, strand=UPSTREAM)
+
+
+def upload_bigwig_downstream (self, uid, filename):
+     upload_bigwig (self, uid, filename, strand=DOWNSTREAM)
+
+
 def upload_dateanalyzed(self, uid, filename):
     self.db_settings.cursor.execute("update labdata set dateanalyzed=now() where uid=%s and dateanalyzed is null", (uid,))
     self.db_settings.conn.commit()
@@ -156,6 +182,7 @@ CHIP_SEQ_SE_UPLOAD = {
                         '{}_macs_peaks_iaintersect.tsv': upload_iaintersect_result,
                         '{}.stat': upload_get_stat,
                         '{}_atdp.tsv': upload_atdp,
+                        '{}.bigwig': upload_bigwig,
                         'set_dateanalyzed': upload_dateanalyzed,
                         'upload_folder_size': upload_folder_size
                      }
