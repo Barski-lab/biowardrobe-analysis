@@ -8,6 +8,8 @@ In each subfolders make `ln -s` on real bowtie indices and
 put **chrNameLength.txt** (**CHR_LENGTH_GENERIC_TSV**).
 We need the following structure to allow mount indices folder to
 container which runs Bowtie.
+    - ***NOTE***: make sure that docker can follow soft links when they are mounted to container.
+      If not - copy files instead of linking
 
 2. Create **/wardrobe/indices/[ANNOTATIONS]** folder and place there subfolders
 ***dm3***, ***mm10***, ***mm10c***, ***hg19***, 
