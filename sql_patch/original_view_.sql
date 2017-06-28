@@ -35,7 +35,7 @@ WHERE ((`l`.`deleted` = 0)
 UNION
 SELECT replace(concat(`l`.`uid`,'_grp'),'-','_') AS `tableName`,
        `l`.`name4browser` AS `shortLabel`,
-       'bed 4 +' AS `type`,
+       NULL AS `type`,
        `l`.`name4browser` AS `longLabel`,
        0 AS `visibility`,
        10 AS `priority`,
@@ -53,7 +53,8 @@ SELECT replace(concat(`l`.`uid`,'_grp'),'-','_') AS `tableName`,
        NULL AS `html`,
        `l`.`egroup_id` AS `grp`,
        0 AS `canPack`,
-       concat('compositeTrack on
+       concat('superTrack on
+               visibility hide
                group ',`l`.`egroup_id`,'
                track ',replace(concat(`l`.`uid`,'_grp'),'-','_'),'') AS `settings`
 FROM ((`ems`.`labdata` `l`
@@ -70,7 +71,7 @@ SELECT replace(concat(`l`.`uid`,'_wtrack'),'-','_') AS `tableName`,
        `l`.`name4browser` AS `shortLabel`,
        'bedGraph 4' AS `type`,
        `l`.`name4browser` AS `longLabel`,
-       0 AS `visibility`,
+       2 AS `visibility`,
        10 AS `priority`,
        30 AS `colorR`,
        70 AS `colorG`,
@@ -89,6 +90,7 @@ SELECT replace(concat(`l`.`uid`,'_wtrack'),'-','_') AS `tableName`,
        concat('parent ',replace(concat(`l`.`uid`,'_grp'),'-','_'),'
        	   track ',replace(concat(`l`.`uid`,'_wtrack'),'-','_'),'
        	   autoScale on
+               visibility full
        	   windowingFunction maximum') AS `settings`
 FROM ((`ems`.`labdata` `l`
        JOIN `ems`.`experimenttype` `et`)
@@ -104,7 +106,7 @@ SELECT replace(concat(`l`.`uid`,'_islands'),'-','_') AS `tableName`,
        `l`.`name4browser` AS `shortLabel`,
        'bed 4 +' AS `type`,
        `l`.`name4browser` AS `longLabel`,
-       0 AS `visibility`,
+       1 AS `visibility`,
        10 AS `priority`,
        0 AS `colorR`,
        30 AS `colorG`,
