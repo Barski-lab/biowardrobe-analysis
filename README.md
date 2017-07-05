@@ -18,7 +18,12 @@ Each of these subfolders may include various annotation files
 for correspondent genome. Tab-separated files should be named **refgene.tsv**
 (**ANNOTATION_GENERIC_TSV**)
 
-3. Make sure that you've pulled all docker images used by workflow.
+3. Insert into ems.settings new record, which points to Airflow DB name
+```sql
+    INSERT INTO ems.settings  VALUES ('airflowdb','airflow','Database name to be used by Airflow', 0, 3);
+```
+
+4. Make sure that you've pulled all docker images used by workflow.
 If not, it'll take a lot of time to pull it while executing task and it
 will be marked as failed one
 

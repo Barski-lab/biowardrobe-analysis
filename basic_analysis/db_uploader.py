@@ -1,3 +1,5 @@
+"""Strategy pattern to run BaseUploader.execute depending on types of files to be uploaded"""
+
 import warnings
 import os
 import types
@@ -14,6 +16,7 @@ class BaseUploader:
 
 
 def upload_results_to_db (upload_set, uid, raw_data, db_settings):
+    """Call execute function for all created BaseUploader"""
     for key,value in upload_set.iteritems():
         try:
             BaseUploader(db_settings, value).execute(uid, os.path.join(raw_data, uid, key.format(uid)))
@@ -22,6 +25,7 @@ def upload_results_to_db (upload_set, uid, raw_data, db_settings):
 
 
 def upload_macs2_fragment_stat(self, uid, filename):
+    self.db_settings.use_ems()
     with open(filename, 'r') as input_file:
         data = input_file.read().strip().split()
         data.append(uid)
@@ -30,6 +34,7 @@ def upload_macs2_fragment_stat(self, uid, filename):
 
 
 def upload_iaintersect_result(self, uid, filename):
+    self.db_settings.use_ems()
     warnings.filterwarnings('ignore', category=MySQLdb.Warning)
     table_name = self.db_settings.settings['experimentsdb'] + '.`' + uid + '_islands`'
     self.db_settings.cursor.execute("select g.db from labdata l inner join genome g ON g.id=genome_id where uid=%s", (uid,))
@@ -106,6 +111,7 @@ def upload_iaintersect_result(self, uid, filename):
 
 
 def upload_get_stat (self, uid, filename):
+    self.db_settings.use_ems()
     with open(filename, 'r') as input_file:
         data = input_file.read().strip().split()
         # TOTAL, ALIGNED, SUPRESSED, USED
@@ -138,6 +144,7 @@ def upload_atdp(self, uid, filename):
 
 
 def upload_bigwig (self, uid, filename, strand=None):
+    self.db_settings.use_ems()
     self.db_settings.cursor.execute("SELECT g.db FROM labdata l INNER JOIN genome g ON g.id=genome_id WHERE uid=%s", (uid,))
     db_tuple = self.db_settings.cursor.fetchone()
     if not db_tuple:
@@ -163,11 +170,13 @@ def upload_bigwig_downstream (self, uid, filename):
 
 
 def upload_dateanalyzed(self, uid, filename):
+    self.db_settings.use_ems()
     self.db_settings.cursor.execute("update labdata set dateanalyzed=now() where uid=%s and dateanalyzed is null", (uid,))
     self.db_settings.conn.commit()
 
 
 def upload_folder_size(self, uid, filename):
+    self.db_settings.use_ems()
     total_size = 0
     for root, dirs, files in os.walk(os.path.dirname(filename)):
         for f in files:
@@ -176,13 +185,3 @@ def upload_folder_size(self, uid, filename):
     self.db_settings.cursor.execute("update labdata set size = %s where uid=%s", (int(total_size)/1024.0,uid))
     self.db_settings.conn.commit()
 
-
-CHIP_SEQ_SE_UPLOAD = {
-                        '{}_fragment_stat.tsv': upload_macs2_fragment_stat,
-                        '{}_macs_peaks_iaintersect.tsv': upload_iaintersect_result,
-                        '{}.stat': upload_get_stat,
-                        '{}_atdp.tsv': upload_atdp,
-                        '{}.bigwig': upload_bigwig,
-                        'set_dateanalyzed': upload_dateanalyzed,
-                        'upload_folder_size': upload_folder_size
-                     }

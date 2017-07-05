@@ -36,7 +36,8 @@ import warnings
 import string
 import subprocess
 import regex
-from biow_exceptions import BiowJobException
+from biow_exceptions import BiowJobException, BiowWorkflowException
+from constants import LIBSTATUS, JOBS_FAIL
 
 def send_mail(toaddrs, body):
     fromaddr = 'biowrdrobe@biowardrobe.com'
@@ -361,8 +362,26 @@ def getFolderSize(folder):
 #      CWL       #
 #================#
 
+def check_job(db_settings, uid, workflow, jobs_folder):
+    """Check status for current job from Airflow DB"""
+    tasks, total = get_tasks(uid, db_settings)
+    tasks = {k: v for k,v in tasks.iteritems() if v}
+    if not tasks:
+        failed_file = os.path.join(jobs_folder, JOBS_FAIL, os.path.splitext(os.path.basename(workflow))[0] + '-' + uid + '.json')
+        if os.path.isfile(failed_file): # If job file was moved to failed folder before even started
+            raise BiowJobException(uid, message="Failed to run job file. Check if correspondent workflow exists")
+        return None, None
+    if tasks.get("failed"):
+        raise BiowWorkflowException (uid, message = tasks)
+    elif total > 0 and len(tasks.get("success", [])) == total: # All the tasks exit with success
+        return LIBSTATUS["SUCCESS_PROCESS"], "Complete"
+    else:
+        return LIBSTATUS["PROCESSING"], tasks
+
 
 def update_status (uid, message, code, db_settings, option_string=""):
+    """Update libstatus for current uid"""
+    db_settings.use_ems()
     if option_string and not option_string.startswith(','):
         option_string = ',' + option_string
     db_settings.cursor.execute("update labdata set libstatustxt='{0}', libstatus={1} {2} where uid='{3}'".format(str(message).replace("'", '"'), code, option_string, uid))
@@ -374,12 +393,16 @@ def submit_err(error, db_settings):
 
 
 def get_last_dag_id (uid, db_settings):
+    """Get the latest dag run for current uid"""
+    db_settings.use_airflow()
     db_settings.cursor.execute("select dag_id from dag_run where dag_id like '%{0}%'".format(uid))
     dags = db_settings.cursor.fetchall()
     return sorted([dag[0] for dag in dags])[-1] if dags else None
 
 
 def get_tasks (uid, db_settings):
+    """Get all tasks splitted into status groups for running dag by uid"""
+    db_settings.use_airflow()
     db_settings.cursor.execute("select task_id, state from task_instance where dag_id='{0}'".format(get_last_dag_id(uid, db_settings)))
     collected = {}
     tasks = db_settings.cursor.fetchall()
@@ -389,6 +412,7 @@ def get_tasks (uid, db_settings):
 
 
 def check_if_duplicate_dag (uid, db_settings):
+    """Check if DAG run with the dag_id already exists"""
     if bool(get_last_dag_id(uid, db_settings)):
         raise BiowJobException(uid, message='Duplicate dag_id. Use ForceRun')
 
@@ -409,6 +433,7 @@ def complete_input(item):
 
 
 def remove_not_set_inputs(job_object):
+    """Remove all input parameters from job which are not set"""
     job_object_filtered ={}
     for key,value in job_object.iteritems():
         if complete_input(value):

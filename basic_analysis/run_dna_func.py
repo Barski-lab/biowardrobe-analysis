@@ -1,6 +1,6 @@
 import os
 import json
-from DefFunctions import get_tasks, file_exist, remove_not_set_inputs
+from DefFunctions import remove_not_set_inputs
 import collections
 from biow_exceptions import (BiowFileNotFoundException,
                              BiowJobException,
@@ -10,38 +10,28 @@ from constants import (LIBSTATUS,
                        CHR_LENGTH_GENERIC_TSV,
                        JOBS_NEW,
                        JOBS_RUNNING,
-                       JOBS_FAIL,
                        ANNOTATIONS,
                        ANNOTATION_GENERIC_TSV)
 
 
-def check_job(db_settings, row, workflow, jobs_folder):
-    tasks, total = get_tasks(row[1], db_settings)
-    tasks = {k: v for k,v in tasks.iteritems() if v}
-    if not tasks:
-        failed_file = os.path.join(jobs_folder, JOBS_FAIL, os.path.splitext(os.path.basename(workflow))[0] + '-' + row[1] + '.json')
-        if os.path.isfile(failed_file):
-            raise BiowJobException(row[1], message="Failed to run job file. Check if correspondent workflow exists")
-        return (None, None)
-    if tasks.get("failed"):
-        raise BiowWorkflowException (row[1], message = tasks)
-    elif total > 0 and len(tasks.get("success", [])) == total:
-        return (LIBSTATUS["SUCCESS_PROCESS"], "Complete")
-    else:
-        return (LIBSTATUS["PROCESSING"], tasks)
-
-
 def get_control(db_settings, **kwargs):
-    if not kwargs['control_id']: return None
+    """Return path to control file
+    """
+    db_settings.use_ems()
+    if not kwargs['control_id']:
+        return None
     db_settings.cursor.execute("select libstatus from labdata where uid=%s", (kwargs['control_id'],))
     row = db_settings.cursor.fetchone()
-    if int(row[0]) != LIBSTATUS['SUCCESS_PROCESS']:
+    if not row or int(row[0]) != LIBSTATUS['SUCCESS_PROCESS']:
         raise BiowFileNotFoundException(kwargs['uid'], code=LIBSTATUS["SUCCESS_DOWNLOAD"], message="Control dataset has not been analyzed yet")
-    return os.path.join(kwargs['raw_data'],kwargs['uid'],kwargs['uid']+'.bam')
+    control_filename = os.path.join(kwargs['raw_data'],kwargs['control_id'],kwargs['control_id']+'.bam')
+    if not os.path.isfile(control_filename):
+        raise BiowFileNotFoundException(kwargs['uid'], message="Control file {} is not found".format(kwargs['control_id']))
+    return control_filename
 
 
 def submit_job(db_settings, row, raw_data, indices, workflow, template_job, threads, jobs_folder):
-    """Generate and writes job file to a specific folder"""
+    """Generate and export job file to a specific folder"""
     jobs_folder = jobs_folder if os.path.isabs(jobs_folder) else os.path.join(os.getcwd(),jobs_folder)
     workflow = os.path.splitext(os.path.basename(workflow))[0]
     kwargs = {
@@ -64,7 +54,9 @@ def submit_job(db_settings, row, raw_data, indices, workflow, template_job, thre
         "template_job": template_job,
         "threads": threads
     }
-    kwargs["fastq_input_file"] = os.path.join(kwargs["raw_data"], kwargs["uid"], kwargs["uid"] + '.fastq')
+    #  We always create both upstream and downstream, even if we gonna use only upstream
+    kwargs["fastq_file_upstream"] = os.path.join(kwargs["raw_data"], kwargs["uid"], kwargs["uid"] + '.fastq')
+    kwargs["fastq_file_downstream"] = os.path.join(kwargs["raw_data"], kwargs["uid"], kwargs["uid"] + '_2.fastq')
     kwargs["bowtie_indices_folder"] = os.path.join(kwargs["indices"], BOWTIE_INDICES, kwargs["genome"])
     kwargs["chrom_length"] = os.path.join(kwargs["indices"], BOWTIE_INDICES, kwargs["genome"], CHR_LENGTH_GENERIC_TSV)
     kwargs["annotation_input_file"] = os.path.join(kwargs["indices"], ANNOTATIONS, kwargs["genome"],
@@ -79,8 +71,9 @@ def submit_job(db_settings, row, raw_data, indices, workflow, template_job, thre
     except BiowFileNotFoundException:
         raise
 
-    if not file_exist(os.path.join(kwargs['raw_data'],kwargs['uid']), kwargs["uid"], 'fastq'):
+    if not os.path.isfile(kwargs["fastq_file_upstream"]) or (kwargs['pair'] and not os.path.isfile(kwargs["fastq_file_downstream"])):
         raise BiowFileNotFoundException(kwargs["uid"])
+
     filled_job_object = remove_not_set_inputs(json.loads(template_job.format(**kwargs).replace("'True'",'true').replace("'False'",'false').replace('"True"','true').replace('"False"','false')))
     filled_job_str = json.dumps(collections.OrderedDict(sorted(filled_job_object.items())),indent=4)
 
