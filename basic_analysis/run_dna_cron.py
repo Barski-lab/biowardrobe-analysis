@@ -55,13 +55,19 @@ for row in rows:
                    template_job=CHIP_SEQ_PE_TEMPLATE_JOB if 'pair' in row[0] else CHIP_SEQ_SE_TEMPLATE_JOB,
                    threads=biow_db_settings.settings['maxthreads'],
                    jobs_folder=sys.argv[1]) # sys.argv[1] - path where to save generated job files
-        update_status(uid=row[4],
-                      db_settings=biow_db_settings,
-                      message='Processing',
-                      code=11,
-                      option_string="forcerun=0, dateanalyzes=now()")
+        # update_status(uid=row[4],
+        #               db_settings=biow_db_settings,
+        #               message='Processing',
+        #               code=11,
+        #               option_string="forcerun=0, dateanalyzes=now()")
+        print 'update_status(uid={}, \
+               db_settings=biow_db_settings, \
+               message="Processing", \
+               code=11, \
+               option_string="forcerun=0, dateanalyzes=now()")'.format(row[4])
     except BiowBasicException as ex:
-        submit_err (error=ex, db_settings=biow_db_settings)
+        # submit_err (error=ex, db_settings=biow_db_settings)
+        print "submit_err (error={}, db_settings=biow_db_settings)".format(str(ex))
         continue
 
 
@@ -85,20 +91,35 @@ for row in rows:
                                              workflow=CHIP_SEQ_PE_WORKFLOW if 'pair' in row[0] else CHIP_SEQ_SE_WORKFLOW,
                                              jobs_folder=sys.argv[1]) # sys.argv[1] - path where to save generated job files
         if libstatus:
-            update_status(uid=row[1],
-                          message=libstatustxt,
-                          code=libstatus,
-                          db_settings=biow_db_settings)
+            # update_status(uid=row[1],
+            #               message=libstatustxt,
+            #               code=libstatus,
+            #               db_settings=biow_db_settings)
+            print "update_status(uid={0}, \
+                   message={1}, \
+                   code={2}, \
+                   db_settings=biow_db_settings)".format(row[1],libstatustxt,libstatus)
             if libstatus==LIBSTATUS["SUCCESS_PROCESS"]:
-                update_status(uid=row[1],
-                              message=libstatustxt,
-                              code=libstatus,
-                              db_settings=biow_db_settings,
-                              option_string="dateanalyzee=now()") # Set the date of last analysis
-                upload_results_to_db(upload_set=CHIP_SEQ_UPLOAD,
-                                     uid=row[1],
-                                     raw_data=os.path.join(biow_db_settings.settings['wardrobe'], biow_db_settings.settings['preliminary']),
-                                     db_settings=biow_db_settings)
+                # update_status(uid=row[1],
+                #               message=libstatustxt,
+                #               code=libstatus,
+                #               db_settings=biow_db_settings,
+                #               option_string="dateanalyzee=now()") # Set the date of last analysis
+                print 'update_status(uid={0}, \
+                       message={1}, \
+                       code={2}, \
+                       db_settings=biow_db_settings, \
+                       option_string="dateanalyzee=now()")'.format(row[1],libstatustxt,libstatus)
+                # upload_results_to_db(upload_set=CHIP_SEQ_UPLOAD,
+                #                      uid=row[1],
+                #                      raw_data=os.path.join(biow_db_settings.settings['wardrobe'], biow_db_settings.settings['preliminary']),
+                #                      db_settings=biow_db_settings)
+                print "upload_results_to_db(upload_set=CHIP_SEQ_UPLOAD, \
+                       uid={0}, \
+                       raw_data={1}, \
+                       db_settings=biow_db_settings)".format(row[1],os.path.join(biow_db_settings.settings['wardrobe'], biow_db_settings.settings['preliminary']))
     except BiowBasicException as ex:
-        submit_err (error=ex, db_settings=biow_db_settings)
+        # submit_err (error=ex, db_settings=biow_db_settings)
+        print "submit_err (error={}, db_settings=biow_db_settings)".format(str(ex))
         continue
+
