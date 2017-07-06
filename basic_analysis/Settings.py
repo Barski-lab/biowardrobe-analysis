@@ -61,5 +61,4 @@ class Settings:
 
 
     def use_airflow(self):
-        # self.cursor.execute( 'use {}'.format(self.settings["airflowdb"]) )
-        self.cursor.execute('use airflow')
+        self.cursor.execute( 'use {}'.format(self.settings["airflowdb"]) )
