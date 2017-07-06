@@ -28,6 +28,7 @@ biow_db_settings.cursor.execute((
     "where libstatus={SUCCESS_DOWNLOAD} and experimenttype_id in "
     "(select id from experimenttype where etype like 'DNA%') "
     "and COALESCE(egroup_id,'') <> '' and COALESCE(name4browser,'') <> '' and deleted=0 ").format(**LIBSTATUS))
+biow_db_settings.conn.commit()
 biow_db_settings.cursor.execute((
     "select e.etype,g.db,g.findex,g.annotation,l.uid,fragmentsizeexp,fragmentsizeforceuse,forcerun, "
     "COALESCE(l.trim5,0), COALESCE(l.trim3,0),COALESCE(a.properties,0), COALESCE(l.rmdup,0),g.gsize, "

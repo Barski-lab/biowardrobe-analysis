@@ -7,6 +7,7 @@ import MySQLdb
 import string
 from biow_exceptions import BiowUploadException
 from constants import UPSTREAM, DOWNSTREAM
+import glob
 
 class BaseUploader:
     def __init__(self, database_settings, func=None):
@@ -184,4 +185,8 @@ def upload_folder_size(self, uid, filename):
             total_size += os.path.getsize(fp)
     self.db_settings.cursor.execute("update labdata set size = %s where uid=%s", (int(total_size)/1024.0,uid))
     self.db_settings.conn.commit()
+
+def delete_files(self, uid, filename):
+    for item_file in glob.glob(filename):
+        os.remove(item_file)
 

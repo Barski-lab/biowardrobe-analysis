@@ -4,7 +4,8 @@ from db_uploader import (upload_macs2_fragment_stat,
                          upload_atdp,
                          upload_bigwig,
                          upload_dateanalyzed,
-                         upload_folder_size)
+                         upload_folder_size,
+                         delete_files)
 
 
 CHIP_SEQ_UPLOAD = {
@@ -14,5 +15,6 @@ CHIP_SEQ_UPLOAD = {
                         '{}_atdp.tsv': upload_atdp,
                         '{}.bigwig': upload_bigwig,
                         'set_dateanalyzed': upload_dateanalyzed,
-                        'upload_folder_size': upload_folder_size
+                        'upload_folder_size': upload_folder_size,
+                        '{}*.fastq': delete_files
                   }
