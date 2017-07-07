@@ -27,6 +27,8 @@ for correspondent genome. Tab-separated files should be named **refgene.tsv**
 If not, it'll take a lot of time to pull it while executing task and it
 will be marked as failed one
 
+5. Update views for Genome Browser with `biowardrobe_patched_view` scripts
+
 
 ### Installation on virtual machine in edit mode
 1. Copy source code for the following repositories
