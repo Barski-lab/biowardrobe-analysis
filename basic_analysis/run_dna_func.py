@@ -85,4 +85,4 @@ def submit_job(db_settings, row, raw_data, indices, workflow, template_job, thre
         with open(output_filename, 'w') as output_file:
             output_file.write(filled_job_str)
     except Exception as ex:
-        raise BiowJobException(kwargs['uid'], message=str(ex))
+        raise BiowJobException(kwargs['uid'], message="Failed to write job file: "+str(ex))
