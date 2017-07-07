@@ -151,9 +151,9 @@ def upload_bigwig (self, uid, filename, strand=None):
     if not db_tuple:
         raise BiowUploadException(uid, message="DB not found")
     gb_bigwig_table_name = {
-        UPSTREAM: db_tuple[0] + '.`' + string.replace(uid, "-", "_") + '_upstream_wtrack`',
-        DOWNSTREAM: db_tuple[0] + '.`' + string.replace(uid, "-", "_") + '_downstream_wtrack`',
-        None: db_tuple[0] + '.`' + string.replace(uid, "-", "_") + '_wtrack`'
+        UPSTREAM: db_tuple[0] + '.`' + string.replace(uid, "-", "_") + '_upstream_f_wtrack`',
+        DOWNSTREAM: db_tuple[0] + '.`' + string.replace(uid, "-", "_") + '_downstream_f_wtrack`',
+        None: db_tuple[0] + '.`' + string.replace(uid, "-", "_") + '_f_wtrack`'
     }[strand]
     self.db_settings.cursor.execute(" DROP TABLE IF EXISTS " + gb_bigwig_table_name)
     self.db_settings.cursor.execute(" CREATE TABLE " + gb_bigwig_table_name +
