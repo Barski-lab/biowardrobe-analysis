@@ -1,5 +1,5 @@
-DROP VIEW IF EXISTS `dm3`.`trackDb_local`;
-CREATE VIEW `dm3`.`trackDb_local` AS
+DROP VIEW IF EXISTS `rheMac8`.`trackDb_local`;
+CREATE VIEW `rheMac8`.`trackDb_local` AS
 SELECT replace(concat(`l`.`uid`,'_wtrack'),'-','_') AS `tableName`,
        `l`.`name4browser` AS `shortLabel`,
        if((`et`.`etype` LIKE '%dUTP%'),'PbedGraph 4','bedGraph 4') AS `type`,
@@ -30,7 +30,7 @@ WHERE ((`l`.`deleted` = 0)
        AND (`l`.`experimenttype_id` = `et`.`id`)
        AND (`et`.`etype` LIKE '%RNA%')
        AND (`l`.`genome_id` = `g`.`id`)
-       AND (`g`.`db` LIKE 'dm%'))
+       AND (`g`.`db` LIKE 'rheMac8%'))
 UNION
 SELECT replace(concat(`l`.`uid`,'_grp'),'-','_') AS `tableName`,
        `l`.`name4browser` AS `shortLabel`,
@@ -64,7 +64,7 @@ WHERE ((`l`.`deleted` = 0)
        AND (`l`.`experimenttype_id` = `et`.`id`)
        AND (`et`.`etype` LIKE '%DNA%')
        AND (`l`.`genome_id` = `g`.`id`)
-       AND (`g`.`db` LIKE 'dm%'))
+       AND (`g`.`db` LIKE 'rheMac8%'))
 UNION
 SELECT replace(concat(`l`.`uid`,'_wtrack'),'-','_') AS `tableName`,
        `l`.`name4browser` AS `shortLabel`,
@@ -87,10 +87,10 @@ SELECT replace(concat(`l`.`uid`,'_wtrack'),'-','_') AS `tableName`,
        `l`.`egroup_id` AS `grp`,
        0 AS `canPack`,
        concat('parent ',replace(concat(`l`.`uid`,'_grp'),'-','_'),'
-               track ',replace(concat(`l`.`uid`,'_wtrack'),'-','_'),'
-               autoScale on
-               visibility full
-               windowingFunction maximum') AS `settings`
+       		   track ',replace(concat(`l`.`uid`,'_wtrack'),'-','_'),'
+       		   autoScale on
+       		   visibility full
+       		   windowingFunction maximum') AS `settings`
 FROM ((`ems`.`labdata` `l`
        JOIN `ems`.`experimenttype` `et`)
       JOIN `ems`.`genome` `g`)
@@ -99,7 +99,7 @@ WHERE ((`l`.`deleted` = 0)
        AND (`l`.`experimenttype_id` = `et`.`id`)
        AND (`et`.`etype` LIKE '%DNA%')
        AND (`l`.`genome_id` = `g`.`id`)
-       AND (`g`.`db` LIKE 'dm%'))
+       AND (`g`.`db` LIKE 'rheMac8%'))
 UNION
 SELECT replace(concat(`l`.`uid`,'_islands'),'-','_') AS `tableName`,
        `l`.`name4browser` AS `shortLabel`,
@@ -122,8 +122,8 @@ SELECT replace(concat(`l`.`uid`,'_islands'),'-','_') AS `tableName`,
        `l`.`egroup_id` AS `grp`,
        1 AS `canPack`,
        concat('parent ',replace(concat(`l`.`uid`,'_grp'),'-','_'),'
-               track ',replace(concat(`l`.`uid`,'_islands'),'-','_'),'
-               visibility dense') AS `settings`
+       		   track ',replace(concat(`l`.`uid`,'_islands'),'-','_'),'
+       		   visibility dense') AS `settings`
 FROM ((`ems`.`labdata` `l`
        JOIN `ems`.`experimenttype` `et`)
       JOIN `ems`.`genome` `g`)
@@ -132,7 +132,7 @@ WHERE ((`l`.`deleted` = 0)
        AND (`l`.`experimenttype_id` = `et`.`id`)
        AND (`et`.`etype` LIKE '%DNA%')
        AND (`l`.`genome_id` = `g`.`id`)
-       AND (`g`.`db` LIKE 'dm%'))
+       AND (`g`.`db` LIKE 'rheMac8%'))
 UNION
 SELECT replace(concat(`l`.`uid`,'_f_wtrack'),'-','_') AS `tableName`,
        `l`.`name4browser` AS `shortLabel`,
@@ -155,10 +155,10 @@ SELECT replace(concat(`l`.`uid`,'_f_wtrack'),'-','_') AS `tableName`,
        `l`.`egroup_id` AS `grp`,
        0 AS `canPack`,
        concat('parent ',replace(concat(`l`.`uid`,'_grp'),'-','_'),'
-               track ',replace(concat(`l`.`uid`,'_f_wtrack'),'-','_'),'
-               autoScale on
-               visibility full
-               windowingFunction maximum') AS `settings`
+       		   track ',replace(concat(`l`.`uid`,'_f_wtrack'),'-','_'),'
+       		   autoScale on
+       		   visibility full
+       		   windowingFunction maximum') AS `settings`
 FROM ((`ems`.`labdata` `l`
        JOIN `ems`.`experimenttype` `et`)
       JOIN `ems`.`genome` `g`)
@@ -167,4 +167,4 @@ WHERE ((`l`.`deleted` = 0)
        AND (`l`.`experimenttype_id` = `et`.`id`)
        AND (`et`.`etype` LIKE '%DNA%')
        AND (`l`.`genome_id` = `g`.`id`)
-       AND (`g`.`db` LIKE 'dm%'))
+       AND (`g`.`db` LIKE 'rheMac8%'))
