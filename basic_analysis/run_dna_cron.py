@@ -58,7 +58,7 @@ for row in rows:
                    jobs_folder=sys.argv[1]) # sys.argv[1] - path where to save generated job files
         update_status(uid=row[4],
                       db_settings=biow_db_settings,
-                      message='Processing',
+                      message='Scheduled for processing',
                       code=11,
                       option_string="forcerun=0, dateanalyzes=now()")
     except BiowBasicException as ex:
