@@ -73,6 +73,7 @@ while True:
                             " FROM labdata l,experimenttype e,genome g "
                             " WHERE e.id=experimenttype_id AND g.id=genome_id AND "
                             "((forcerun=1 AND libstatus >11 AND deleted=0) OR deleted=1)"
+                            " AND l.notes LIKE '%use airflow%' "
                             " ORDER BY dateadd LIMIT 1")
     row = settings.cursor.fetchone()
     if not row:
