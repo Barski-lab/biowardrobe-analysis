@@ -369,14 +369,19 @@ def check_job(db_settings, uid, workflow, jobs_folder):
     if not tasks:
         failed_file = os.path.join(jobs_folder, JOBS_FAIL, os.path.splitext(os.path.basename(workflow))[0] + '-' + uid + '.json')
         if os.path.isfile(failed_file): # If job file was moved to failed folder before even started
-            raise BiowJobException(uid, message="Failed to run job file. Check if correspondent workflow exists")
+            raise BiowJobException(uid, message="Job file is already marked as failed one")
         return None, None
     if tasks.get("failed"):
         raise BiowWorkflowException (uid, message = tasks)
     elif total > 0 and len(tasks.get("success", [])) == total: # All the tasks exit with success
         return LIBSTATUS["SUCCESS_PROCESS"], "Complete"
     else:
-        return LIBSTATUS["PROCESSING"], tasks
+        percent_complete = 0
+        try:
+            percent_complete = int(len(tasks.get("success",[]))/total*100)
+        except ZeroDivisionError:
+            pass
+        return LIBSTATUS["PROCESSING"], str(percent_complete)+"%\n"+str(tasks)
 
 
 def update_status (uid, message, code, db_settings, option_string=""):
