@@ -20,8 +20,8 @@ CHIP_SEQ_GEN_BIGWIG_WORKFLOW = 'chipseq-gen-bigwig.cwl'
 CHIP_SEQ_GEN_BIGWIG_TEMPLATE_JOB = ('{{'
                   '"bam_bai_pair_file": {{"class": "File", "location": "{bam_file}", "secondaryFiles": [{{ "class": "File", "location": "{bai_file}"  }}]}},'
                   '"chrom_length_file": {{"class": "File", "location": "{chrom_length_file}"}},'
-                  '"mapped_reads": "{mapped_reads}",'
-                  '"fragment_size": "{fragment_size}",'
+                  '"mapped_reads": {mapped_reads},'
+                  '"fragment_size": {fragment_size},'
                   '"paired": "{paired}",'
                   '"output_folder": "{output_folder}",' # required
                   '"uid": "{uid}"'                      # required
@@ -33,9 +33,10 @@ def submit_job(db_settings, row, workflow, template_job, jobs_folder):
     """Generate and export job file to a specific folder"""
     # "select   e.etype,   g.findex,   l.uid,   l.fragmentsize,   l.tagsmapped   from labdata l "
     jobs_folder = jobs_folder if os.path.isabs(jobs_folder) else os.path.join(os.getcwd(), jobs_folder)
-    raw_data = os.path.join(db_settings.settings['wardrobe'], db_settings.settings['preliminary']),
-    indices = os.path.join(db_settings.settings['wardrobe'], db_settings.settings['indices']),
+    raw_data = os.path.join(db_settings.settings['wardrobe'], db_settings.settings['preliminary'])
+    indices = os.path.join(db_settings.settings['wardrobe'], db_settings.settings['indices'])
     workflow_basename = os.path.splitext(os.path.basename(workflow))[0]
+
     kwargs = {
         "bam_file": os.path.join(raw_data, row[2], row[2] + '.bam'),
         "bai_file": os.path.join(raw_data, row[2], row[2] + '.bam.bai'),
@@ -49,7 +50,7 @@ def submit_job(db_settings, row, workflow, template_job, jobs_folder):
 
     output_filename = os.path.join( jobs_folder, JOBS_NEW,     workflow_basename + '-' + kwargs["uid"] + '.json')
     running_filename = os.path.join(jobs_folder, JOBS_RUNNING, workflow_basename + '-' + kwargs["uid"] + '.json')
-    bigwig_filename = os.path.join(raw_data, kwargs["uid"], kwargs["uid"] + '.bigwig'),
+    bigwig_filename = os.path.join(raw_data, kwargs["uid"], kwargs["uid"] + '.bigwig')
 
     if not os.path.isfile(kwargs["bam_file"]) or not os.path.isfile(kwargs["bai_file"]):
         raise BiowFileNotFoundException(kwargs["uid"], message="Missing BAM or BAI file")
@@ -104,5 +105,3 @@ for row in rows:
     except BiowBasicException as ex:
         print "SKIP: generating job file: ", str(ex)
         continue
-    except Exception as ex:
-        print "FATAL: ", str(ex)
