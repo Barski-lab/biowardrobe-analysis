@@ -38,8 +38,8 @@ for row in rows:
     sys.stdout.flush()
     try:
         # First line of protection from generating the job files for the experiments that are already run
-        raise_if_dag_exists(uid=row[3],
-                            db_settings=biow_db_settings)
+        raise_if_dag_exists(uid=row[3], db_settings=biow_db_settings)
+        raise_if_table_exists (db_settings=biow_db_settings, uid=row[3], table=string.replace(row[3], "-", "_") + "_f_wtrack", db=row[1])
         # Second line of protection: if the same file already exists in new or running folder
         # or if bigwig file the ncessary name already exists
         submit_job (db_settings=biow_db_settings,
@@ -49,7 +49,6 @@ for row in rows:
                    jobs_folder=sys.argv[1]) # sys.argv[1] - path where to save generated job files
     except BiowBasicException as ex:
         print "   SKIP: generating job file for ", row[3], " - ", str(ex)
-        continue
 
     # Check which dag completed with success and bigWig is generated
     print "CHECK JOB ROW: " + str(row)
@@ -68,4 +67,3 @@ for row in rows:
                                  db_settings=biow_db_settings)
     except BiowBasicException as ex:
         print "   SKIP: uploading generated bigWig ", row[3], " - ", str(ex)
-        continue
