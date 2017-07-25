@@ -34,7 +34,7 @@ def submit_job(db_settings, row, workflow, template_job, jobs_folder):
     raise_if_file_absent(kwargs['uid'], kwargs["bam_file"])
     raise_if_file_absent(kwargs['uid'], kwargs["bai_file"])
     raise_if_file_absent(kwargs['uid'], kwargs["chrom_length_file"])
-    raise_if_file_exists(kwargs['uid'], os.path.join(raw_data, kwargs["uid"], kwargs["uid"] + '.bigwig'))
+    raise_if_file_exists(kwargs['uid'], os.path.join(raw_data, kwargs["uid"], kwargs["uid"] + '.bigWig'))
     # Check if file exists in job folder (running or new)
     raise_if_file_exists(kwargs['uid'], output_filename)
     raise_if_file_exists(kwargs['uid'], running_filename)

@@ -60,7 +60,7 @@ for row in rows:
                                              jobs_folder=sys.argv[1]) # sys.argv[1] - path where to save generated job files
         if libstatus==LIBSTATUS["SUCCESS_PROCESS"]:
             raise_if_table_exists (db_settings=biow_db_settings, uid=row[3], table=string.replace(row[3], "-", "_") + "_f_wtrack", db=row[1])
-            raise_if_file_absent (row[3],os.path.join(os.path.join(biow_db_settings.settings['wardrobe'], biow_db_settings.settings['preliminary']), row[3], row[3] + '.bigwig'))
+            raise_if_file_absent (row[3],os.path.join(os.path.join(biow_db_settings.settings['wardrobe'], biow_db_settings.settings['preliminary']), row[3], row[3] + '.bigWig'))
             upload_results_to_db(upload_set=CHIP_SEQ_GEN_BIGWIG_UPLOAD,
                                  uid=row[3],
                                  raw_data=os.path.join(biow_db_settings.settings['wardrobe'], biow_db_settings.settings['preliminary']),
