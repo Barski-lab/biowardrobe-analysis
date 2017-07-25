@@ -1,12 +1,12 @@
 import os
 import json
 import collections
-from constants import (CHR_LENGTH_GENERIC_TSV,
-                       JOBS_NEW,
-                       JOBS_RUNNING,
-                       BOWTIE_INDICES)
-from biow_exceptions import BiowJobException
-from DefFunctions import raise_if_file_absent,raise_if_file_exists
+from basic_analysis.constants import (CHR_LENGTH_GENERIC_TSV,
+                                      JOBS_NEW,
+                                      JOBS_RUNNING,
+                                      BOWTIE_INDICES)
+from basic_analysis.biow_exceptions import BiowJobException
+from basic_analysis.DefFunctions import raise_if_file_absent,raise_if_file_exists
 
 
 def submit_job(db_settings, row, workflow, template_job, jobs_folder):
