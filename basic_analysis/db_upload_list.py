@@ -18,3 +18,5 @@ CHIP_SEQ_UPLOAD = {
                         'upload_folder_size': upload_folder_size,
                         '{}*.fastq': delete_files
                   }
+
+CHIP_SEQ_GEN_BIGWIG_UPLOAD = { '{}.bigwig': upload_bigwig }

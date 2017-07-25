@@ -2,7 +2,7 @@
 """ChIP-Seq SE/PE script"""
 
 import os
-from DefFunctions import check_if_duplicate_dag, update_status, submit_err, check_job
+from DefFunctions import raise_if_dag_exists, update_status, submit_err, check_job
 from Settings import Settings
 import datetime
 import sys
@@ -48,8 +48,8 @@ for row in rows:
     print "SUBMIT JOB ROW: " + str(row)
     sys.stdout.flush()
     try:
-        check_if_duplicate_dag(uid=row[4],
-                               db_settings=biow_db_settings)
+        raise_if_dag_exists(uid=row[4],
+                            db_settings=biow_db_settings)
         submit_job (db_settings=biow_db_settings,
                    row=row,
                    raw_data=os.path.join(biow_db_settings.settings['wardrobe'], biow_db_settings.settings['preliminary']),

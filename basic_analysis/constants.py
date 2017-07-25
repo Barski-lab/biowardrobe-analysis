@@ -64,7 +64,14 @@ CHIP_SEQ_PE_TEMPLATE_JOB = ('{{'
                   '"uid": "{uid}"'                      # required
                 '}}')
 
-
-
-
-
+# CHiP-Seq SE/PE generate bigWig
+CHIP_SEQ_GEN_BIGWIG_WORKFLOW = 'chipseq-gen-bigwig.cwl'
+CHIP_SEQ_GEN_BIGWIG_TEMPLATE_JOB = ('{{'
+                  '"bam_bai_pair_file": {{"class": "File", "location": "{bam_file}", "secondaryFiles": [{{ "class": "File", "location": "{bai_file}"  }}]}},'
+                  '"chrom_length_file": {{"class": "File", "location": "{chrom_length_file}"}},'
+                  '"mapped_reads": {mapped_reads},'
+                  '"fragment_size": {fragment_size},'
+                  '"paired": "{paired}",'
+                  '"output_folder": "{output_folder}",' # required
+                  '"uid": "{uid}"'                      # required
+                '}}')
