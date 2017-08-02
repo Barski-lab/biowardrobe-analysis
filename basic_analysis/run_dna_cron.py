@@ -27,8 +27,7 @@ biow_db_settings.cursor.execute((
     "update labdata set libstatustxt='ready for process',libstatus={START_PROCESS} "
     "where libstatus={SUCCESS_DOWNLOAD} and experimenttype_id in "
     "(select id from experimenttype where etype like 'DNA%') "
-    "and COALESCE(egroup_id,'') <> '' and COALESCE(name4browser,'') <> '' and deleted=0 "
-    "and notes like '%use airflow%' ").format(**LIBSTATUS))
+    "and COALESCE(egroup_id,'') <> '' and COALESCE(name4browser,'') <> '' and deleted=0 ").format(**LIBSTATUS))
 biow_db_settings.conn.commit()
 biow_db_settings.cursor.execute((
     "select e.etype,g.db,g.findex,g.annotation,l.uid,fragmentsizeexp,fragmentsizeforceuse,forcerun, "
@@ -75,7 +74,6 @@ biow_db_settings.cursor.execute((
     "inner join experimenttype e ON e.id=experimenttype_id "
     "where e.etype like 'DNA%' and libstatus = {PROCESSING} "
     "and deleted=0 and COALESCE(egroup_id,'') <> '' and COALESCE(name4browser,'') <> '' "
-    "and notes like '%use airflow%' "
     "order by control DESC,dateadd").format(**LIBSTATUS))
 rows = biow_db_settings.cursor.fetchall()
 
