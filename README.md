@@ -76,7 +76,7 @@ will be marked as failed one
     cd biowardrobe-analysis
     sudo pip install -e .
 ```
-8. Create the following folders
+8. Create the following folders. Make sure that user has permissions to w/r to these folder
 ```bash
     mkdir -p ~/cwl/jobs/fail ~/cwl/jobs/new ~/cwl/jobs/running ~/cwl/jobs/success
     mkdir -p ~/cwl/output ~/cwl/tmp ~/cwl/workflows
