@@ -39,7 +39,6 @@ biow_db_settings.cursor.execute((
     "LEFT JOIN (antibody a) ON (l.antibody_id=a.id) "
     "where e.etype like 'DNA%' and libstatus in ({START_PROCESS},1010) "
     "and deleted=0 and COALESCE(egroup_id,'') <> '' and COALESCE(name4browser,'') <> '' "
-    "and l.notes like '%use airflow%' "
     "order by control DESC,dateadd").format(**LIBSTATUS))
 rows = biow_db_settings.cursor.fetchall()
 
