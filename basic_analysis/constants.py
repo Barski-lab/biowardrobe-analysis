@@ -2,7 +2,7 @@ LIBSTATUS = {
     "START_DOWNLOAD":    0,    # Start downloading
     "FAIL_DOWNLOAD":     2000, # Downloading error
     "SUCCESS_DOWNLOAD":  2,    # Downloading succeed
-    "JOB_CREATED":       13,   # Job file is created
+    "JOB_CREATED":       1010, # Job file is created
     "RESTART_DOWNLOAD":  1000, # Restart downloading
     "DOWNLOADING":       1,    # Downloading
     "START_PROCESS":     10,   # Start processing

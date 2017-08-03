@@ -28,7 +28,15 @@ If not, it'll take a lot of time to pull it while executing task and it
 will be marked as failed one
 
 5. Update views for Genome Browser with `biowardrobe_patched_view` scripts
-
+6. Because the new status was added JOB_CREATED (use libstatus=1010), `app.css` should be
+updated to display correct icon (gear_warning.png --> gear_new.png)
+```bash
+.gear-1-10 {
+    background-image: url(images/gear_new.png) !important;
+    width: 16px;
+    height: 16px;
+}
+```
 
 ### Installation on virtual machine in edit mode
 1. Copy source code for the following repositories
