@@ -170,12 +170,12 @@ def raise_if_file_absent (uid, filename):
         raise BiowFileNotFoundException(uid, message="Cannot find file {0}".format(filename))
 
 
-def update_status (uid, message, code, db_settings, option_string=""):
+def update_status (uid, message, code, db_settings, optional_column="", optional_where=""):
     """Update libstatus for current uid"""
     db_settings.use_ems()
-    if option_string and not option_string.startswith(','):
-        option_string = ',' + option_string
-    db_settings.cursor.execute("update labdata set libstatustxt='{0}', libstatus={1} {2} where uid='{3}'".format(str(message).replace("'", '"'), code, option_string, uid))
+    if optional_column and not optional_column.startswith(','):
+        optional_column = ',' + optional_column
+    db_settings.cursor.execute("update labdata set libstatustxt='{0}', libstatus={1} {2} where uid='{3}' {4}".format(str(message).replace("'", '"'), code, optional_column, uid, optional_where))
     db_settings.conn.commit()
 
 

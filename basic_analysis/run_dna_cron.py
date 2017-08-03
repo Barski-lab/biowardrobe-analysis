@@ -24,19 +24,13 @@ print str(datetime.datetime.now())
 # Get all new experiments
 biow_db_settings.use_ems()
 biow_db_settings.cursor.execute((
-    "update labdata set libstatustxt='ready for process',libstatus={START_PROCESS} "
-    "where libstatus={SUCCESS_DOWNLOAD} and experimenttype_id in "
-    "(select id from experimenttype where etype like 'DNA%') "
-    "and COALESCE(egroup_id,'') <> '' and COALESCE(name4browser,'') <> '' and deleted=0 ").format(**LIBSTATUS))
-biow_db_settings.conn.commit()
-biow_db_settings.cursor.execute((
     "select e.etype,g.db,g.findex,g.annotation,l.uid,fragmentsizeexp,fragmentsizeforceuse,forcerun, "
     "COALESCE(l.trim5,0), COALESCE(l.trim3,0),COALESCE(a.properties,0), COALESCE(l.rmdup,0),g.gsize, "
     "COALESCE(control,0), COALESCE(control_id,'') "
     "from labdata l "
     "inner join (experimenttype e,genome g ) ON (e.id=experimenttype_id and g.id=genome_id) "
     "LEFT JOIN (antibody a) ON (l.antibody_id=a.id) "
-    "where e.etype like 'DNA%' and libstatus in ({START_PROCESS},1010) "
+    "where e.etype like 'DNA%' and libstatus in ({SUCCESS_DOWNLOAD},{START_PROCESS}) "
     "and deleted=0 and COALESCE(egroup_id,'') <> '' and COALESCE(name4browser,'') <> '' "
     "order by control DESC,dateadd").format(**LIBSTATUS))
 rows = biow_db_settings.cursor.fetchall()
@@ -58,9 +52,9 @@ for row in rows:
                    jobs_folder=sys.argv[1]) # sys.argv[1] - path where to save generated job files
         update_status(uid=row[4],
                       db_settings=biow_db_settings,
-                      message='Scheduled for processing',
-                      code=11,
-                      option_string="forcerun=0, dateanalyzes=now()")
+                      message='Scheduled',
+                      code=LIBSTATUS["JOB_CREATED"],
+                      optional_column="forcerun=0, dateanalyzes=NULL")
     except BiowBasicException as ex:
         submit_err (error=ex, db_settings=biow_db_settings)
         continue
@@ -72,7 +66,7 @@ biow_db_settings.cursor.execute((
     "select e.etype,l.uid,l.libstatustxt "
     "from labdata l "
     "inner join experimenttype e ON e.id=experimenttype_id "
-    "where e.etype like 'DNA%' and libstatus = {PROCESSING} "
+    "where e.etype like 'DNA%' and libstatus in ({JOB_CREATED}, {PROCESSING}) "
     "and deleted=0 and COALESCE(egroup_id,'') <> '' and COALESCE(name4browser,'') <> '' "
     "order by control DESC,dateadd").format(**LIBSTATUS))
 rows = biow_db_settings.cursor.fetchall()
@@ -90,12 +84,18 @@ for row in rows:
                           message=libstatustxt,
                           code=libstatus,
                           db_settings=biow_db_settings)
+            update_status(uid=row[1],  # is used only to set dateanalyzes value which is laways NULL after we restarted or created new experiment
+                          message=libstatustxt,
+                          code=libstatus,
+                          db_settings=biow_db_settings,
+                          optional_column="forcerun=0, dateanalyzes=now()",
+                          optional_where="and dateanalyzes is null")
             if libstatus==LIBSTATUS["SUCCESS_PROCESS"]:
                 update_status(uid=row[1],
                               message=libstatustxt,
                               code=libstatus,
                               db_settings=biow_db_settings,
-                              option_string="dateanalyzee=now()") # Set the date of last analysis
+                              optional_column="dateanalyzee=now()") # Set the date of last analysis
                 upload_results_to_db(upload_set=CHIP_SEQ_UPLOAD,
                                      uid=row[1],
                                      raw_data=os.path.join(biow_db_settings.settings['wardrobe'], biow_db_settings.settings['preliminary']),
