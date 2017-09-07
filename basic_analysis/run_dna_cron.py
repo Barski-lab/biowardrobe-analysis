@@ -12,7 +12,10 @@ from constants import (LIBSTATUS,
                        CHIP_SEQ_SE_WORKFLOW,
                        CHIP_SEQ_SE_TEMPLATE_JOB,
                        CHIP_SEQ_PE_WORKFLOW,
-                       CHIP_SEQ_PE_TEMPLATE_JOB)
+                       CHIP_SEQ_PE_TEMPLATE_JOB,
+                       CHIP_SEQ_TRIM_SE_WORKFLOW,
+                       CHIP_SEQ_TRIM_PE_WORKFLOW,
+                       FOLDER_ID)
 from db_uploader import upload_results_to_db
 from db_upload_list import CHIP_SEQ_UPLOAD
 
@@ -26,7 +29,7 @@ biow_db_settings.use_ems()
 biow_db_settings.cursor.execute((
     "select e.etype,g.db,g.findex,g.annotation,l.uid,fragmentsizeexp,fragmentsizeforceuse,forcerun, "
     "COALESCE(l.trim5,0), COALESCE(l.trim3,0),COALESCE(a.properties,0), COALESCE(l.rmdup,0),g.gsize, "
-    "COALESCE(control,0), COALESCE(control_id,'') "
+    "COALESCE(control,0), COALESCE(control_id,''), COALESCE(l.egroup_id,'') "
     "from labdata l "
     "inner join (experimenttype e,genome g ) ON (e.id=experimenttype_id and g.id=genome_id) "
     "LEFT JOIN (antibody a) ON (l.antibody_id=a.id) "
@@ -42,11 +45,17 @@ for row in rows:
     try:
         raise_if_dag_exists(uid=row[4],
                             db_settings=biow_db_settings)
+
+        current_workflow = {"True":  {"False": CHIP_SEQ_PE_WORKFLOW,
+                                      "True":  CHIP_SEQ_TRIM_PE_WORKFLOW},
+                            "False": {"False": CHIP_SEQ_SE_WORKFLOW,
+                                      "True":  CHIP_SEQ_TRIM_SE_WORKFLOW}}[str('pair' in row[0])][str(FOLDER_ID == row[15])]
+
         submit_job (db_settings=biow_db_settings,
                    row=row,
                    raw_data=os.path.join(biow_db_settings.settings['wardrobe'], biow_db_settings.settings['preliminary']),
                    indices=os.path.join(biow_db_settings.settings['wardrobe'], biow_db_settings.settings['indices']),
-                   workflow=CHIP_SEQ_PE_WORKFLOW if 'pair' in row[0] else CHIP_SEQ_SE_WORKFLOW,
+                   workflow=current_workflow,
                    template_job=CHIP_SEQ_PE_TEMPLATE_JOB if 'pair' in row[0] else CHIP_SEQ_SE_TEMPLATE_JOB,
                    threads=biow_db_settings.settings['maxthreads'],
                    jobs_folder=sys.argv[1]) # sys.argv[1] - path where to save generated job files
@@ -63,7 +72,7 @@ for row in rows:
 # Get all running jobs
 biow_db_settings.use_ems()
 biow_db_settings.cursor.execute((
-    "select e.etype,l.uid,l.libstatustxt "
+    "select e.etype,l.uid,l.libstatustxt,COALESCE(l.egroup_id,'') "
     "from labdata l "
     "inner join experimenttype e ON e.id=experimenttype_id "
     "where e.etype like 'DNA%' and libstatus in ({JOB_CREATED}, {PROCESSING}) "
@@ -75,9 +84,15 @@ rows = biow_db_settings.cursor.fetchall()
 for row in rows:
     print "CHEK JOB ROW: " + str(row)
     try:
+
+        current_workflow = {"True":  {"False": CHIP_SEQ_PE_WORKFLOW,
+                                      "True":  CHIP_SEQ_TRIM_PE_WORKFLOW},
+                            "False": {"False": CHIP_SEQ_SE_WORKFLOW,
+                                      "True":  CHIP_SEQ_TRIM_SE_WORKFLOW}}[str('pair' in row[0])][str(FOLDER_ID == row[3])]
+
         libstatus, libstatustxt = check_job (uid=row[1],
                                              db_settings=biow_db_settings,
-                                             workflow=CHIP_SEQ_PE_WORKFLOW if 'pair' in row[0] else CHIP_SEQ_SE_WORKFLOW,
+                                             workflow=current_workflow,
                                              jobs_folder=sys.argv[1]) # sys.argv[1] - path where to save generated job files
         if libstatus:
             update_status(uid=row[1],

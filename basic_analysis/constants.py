@@ -76,3 +76,9 @@ CHIP_SEQ_GEN_BIGWIG_TEMPLATE_JOB = ('{{'
                   '"output_folder": "{output_folder}",' # required
                   '"uid": "{uid}"'                      # required
                 '}}')
+
+
+# For TrimGalore testing
+CHIP_SEQ_TRIM_SE_WORKFLOW = 'trim-chipseq-se.cwl'
+CHIP_SEQ_TRIM_PE_WORKFLOW = 'trim-chipseq-pe.cwl'
+FOLDER_ID = 'h765C750-E801-A805-B289-AE8F3947EE14'
