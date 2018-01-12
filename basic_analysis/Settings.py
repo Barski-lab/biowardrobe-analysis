@@ -23,7 +23,7 @@ class Settings:
         return parser
 
 
-    def normalize(not_normalized_args):
+    def normalize(self, not_normalized_args):
         """Resolves all relative paths to be absolute relatively to current working directory"""
         normalized_args = {}
         for key, value in not_normalized_args.__dict__.iteritems():
