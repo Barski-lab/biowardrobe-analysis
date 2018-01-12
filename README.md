@@ -11,6 +11,12 @@ container which runs Bowtie.
     - ***NOTE***: make sure that docker can follow soft links when they are mounted to container.
       If not - copy files instead of linking
 
+    For running **RNA-Seq** analysis the ribosomal bowtie indices should be added.
+    In **/wardrobe/indices/[BOWTIE_INDICES]** create subfolders **dm3_ribo**,
+    **mm10_ribo**, **mm10c_ribo**, **hg19_ribo**, **hg19c_ribo** etc, where **_ribo**
+    coressponds to **RIBO_SUFFIX** from the **constants.py**. Place there ribosomal bowtie indices.
+    
+
 2. Create **/wardrobe/indices/[ANNOTATIONS]** folder and place there subfolders
 ***dm3***, ***mm10***, ***mm10c***, ***hg19***, 
 ***hg19c*** etc. (corresponds to `select findex from ems.genome;`).
