@@ -49,7 +49,7 @@ for row in rows:
                    workflow=CHIP_SEQ_PE_WORKFLOW if 'pair' in row[0] else CHIP_SEQ_SE_WORKFLOW,
                    template_job=CHIP_SEQ_PE_TEMPLATE_JOB if 'pair' in row[0] else CHIP_SEQ_SE_TEMPLATE_JOB,
                    threads=biow_db_settings.settings['maxthreads'],
-                   jobs_folder=sys.argv[1]) # sys.argv[1] - path where to save generated job files
+                   jobs_folder=biow_db_settings.get_args().jobs) # path where to save generated job files
         update_status(uid=row[4],
                       db_settings=biow_db_settings,
                       message='Scheduled',
@@ -78,7 +78,7 @@ for row in rows:
         libstatus, libstatustxt = check_job (uid=row[1],
                                              db_settings=biow_db_settings,
                                              workflow=CHIP_SEQ_PE_WORKFLOW if 'pair' in row[0] else CHIP_SEQ_SE_WORKFLOW,
-                                             jobs_folder=sys.argv[1]) # sys.argv[1] - path where to save generated job files
+                                             jobs_folder=biow_db_settings.get_args().jobs) # path where to save generated job files
         if libstatus:
             update_status(uid=row[1],
                           message=libstatustxt,

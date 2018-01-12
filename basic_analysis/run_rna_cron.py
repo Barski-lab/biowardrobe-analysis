@@ -17,8 +17,6 @@ from db_upload_list import RNA_SEQ_UPLOAD
 biow_db_settings = Settings()
 print str(datetime.datetime.now())
 
-# Get job file folder
-EXPORT_JOBS_TO = sys.argv[1]
 
 # Get all new experiments
 biow_db_settings.use_ems()
@@ -46,7 +44,7 @@ for row in rows:
                    workflow=RNA_SEQ_SET[row[0]][0],
                    template_job=RNA_SEQ_SET[row[0]][1],
                    threads=biow_db_settings.settings['maxthreads'],
-                   jobs_folder=EXPORT_JOBS_TO) # path where to save generated job files
+                   jobs_folder=biow_db_settings.get_args().jobs) # path where to save generated job files
         update_status(uid=row[1],
                       db_settings=biow_db_settings,
                       message='Scheduled',
@@ -75,7 +73,7 @@ for row in rows:
         libstatus, libstatustxt = check_job (uid=row[1],
                                              db_settings=biow_db_settings,
                                              workflow=RNA_SEQ_SET[row[0]][0],
-                                             jobs_folder=EXPORT_JOBS_TO) # path where to save generated job files
+                                             jobs_folder=biow_db_settings.get_args().jobs) # path where to save generated job files
         if libstatus:
             update_status(uid=row[1],
                           message=libstatustxt,
