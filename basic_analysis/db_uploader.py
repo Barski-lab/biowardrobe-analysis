@@ -123,7 +123,7 @@ def upload_get_stat (self, uid, filename):
         data.append(uid)
         self.db_settings.cursor.execute(
             "update labdata set tagstotal=%s,tagsmapped=%s,tagsribo=%s,tagssuppressed=%s,tagsused=%s where uid=%s",
-                               (data[0],     data[1],      data[3],    data[4],          data[5],          data[6]))
+                               (data[0],     data[1],      data[2],    data[3],          data[4],          data[5]))
         self.db_settings.conn.commit()
 
 
@@ -133,7 +133,7 @@ def upload_rpkm (self, uid, filename):
 
     table_basename = self.db_settings.settings['experimentsdb'] + '.`' + uid
     # each suffix includes also '`' to complement '.`' in table_basename
-    suffixes = ['`_isoforms','`_genes','`_common_tss']
+    suffixes = ['_isoforms`','_genes`','_common_tss`']
     # Drop all VIEW and TABLE for this experiment
     for suffix in suffixes:
         self.db_settings.cursor.execute("DROP VIEW IF EXISTS " + table_basename + suffix)
@@ -157,7 +157,7 @@ def upload_rpkm (self, uid, filename):
     self.db_settings.conn.commit()
 
     # Insert values into _isoforms table
-    SQL = " INSERT INTO " + table_basename + "`_isoforms" + " (refseq_id,gene_id,chrom,txStart,txEnd,strand,TOT_R_0,RPKM_0) VALUES"
+    SQL = " INSERT INTO " + table_basename + suffixes[0] + " (refseq_id,gene_id,chrom,txStart,txEnd,strand,TOT_R_0,RPKM_0) VALUES"
     with open(filename, 'r') as input_file:
         for line in input_file.read().splitlines():
             # RefseqId, GeneId, Chrom, TxStart, TxEnd, Strand, TotalReads, Rpkm
@@ -166,7 +166,8 @@ def upload_rpkm (self, uid, filename):
             self.db_settings.cursor.execute(SQL + " (%s,%s,%s,%s,%s,%s,%s,%s)", tuple(line.split(',')))
         self.db_settings.conn.commit()
 
-    self.db_settings.cursor.execute(""" INSERT INTO """ + table_basename + "`_genes" +
+    # Insert values into _genes table
+    self.db_settings.cursor.execute(""" INSERT INTO """ + table_basename + suffixes[1] + # _genes
                                     """ SELECT
                                             GROUP_CONCAT(DISTINCT refseq_id ORDER BY refseq_id SEPARATOR ',') AS refseq_id,
                                             gene_id AS gene_id,
@@ -176,12 +177,13 @@ def upload_rpkm (self, uid, filename):
                                             MAX(strand) AS strand,
                                             COALESCE(SUM(TOT_R_0),0) AS TOT_R_0,
                                             COALESCE(SUM(RPKM_0),0) AS RPKM_0
-                                        FROM """ + table_basename + "`_isoforms" +
+                                        FROM """ + table_basename + suffixes[0] +        # _isoforms
                                     """ GROUP BY gene_id """)
 
     self.db_settings.conn.commit()
 
-    self.db_settings.cursor.execute(""" INSERT INTO """ + table_basename + "`_common_tss" +
+    # Insert values into _common_tss table
+    self.db_settings.cursor.execute(""" INSERT INTO """ + table_basename + suffixes[2] +    # _common_tss
                                     """ SELECT
                                             GROUP_CONCAT(DISTINCT refseq_id ORDER BY refseq_id SEPARATOR ',') AS refseq_id,
                                             GROUP_CONCAT(DISTINCT gene_id ORDER BY gene_id SEPARATOR ',') AS gene_id,
@@ -190,11 +192,11 @@ def upload_rpkm (self, uid, filename):
                                             MAX(txEnd) AS txEnd,
                                             strand AS strand,
                                             COALESCE(SUM(TOT_R_0), 0) AS TOT_R_0,
-                                            COALESCE(SUM(RPKM_0), 0) AS RPKM_0 "
-                                        FROM """ + table_basename + "`_isoforms" +
+                                            COALESCE(SUM(RPKM_0), 0) AS RPKM_0
+                                        FROM """ + table_basename + suffixes[0] +
                                     """ WHERE strand = '+'
-                                        GROUP BY chrom , txStart , strand
-                                        UNION 
+                                        GROUP BY chrom, txStart, strand
+                                        UNION
                                         SELECT
                                             GROUP_CONCAT(DISTINCT refseq_id ORDER BY refseq_id SEPARATOR ',') AS refseq_id,
                                             GROUP_CONCAT(DISTINCT gene_id ORDER BY gene_id SEPARATOR ',') AS gene_id,
@@ -204,9 +206,9 @@ def upload_rpkm (self, uid, filename):
                                             strand AS strand,
                                             COALESCE(SUM(TOT_R_0),0) AS TOT_R_0,
                                             COALESCE(SUM(RPKM_0),0) AS RPKM_0
-                                        FROM """ + table_basename + "`_isoforms" +
+                                        FROM """ + table_basename + suffixes[0] +
                                     """ WHERE strand = '-'
-                                        GROUP BY chrom,txEnd,strand""")
+                                        GROUP BY chrom, txEnd, strand""")
 
     self.db_settings.conn.commit()
 
