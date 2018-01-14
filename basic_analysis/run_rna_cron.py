@@ -10,7 +10,7 @@ from biow_exceptions import BiowBasicException
 from run_rna_func import submit_job
 from constants import (LIBSTATUS, RNA_SEQ_SET)
 from db_uploader import upload_results_to_db
-from db_upload_list import RNA_SEQ_UPLOAD
+from db_upload_list import (RNA_SEQ_UPLOAD, RNA_SEQ_DUTP_UPLOAD)
 
 
 # Get access to DB
@@ -91,7 +91,7 @@ for row in rows:
                               code=libstatus,
                               db_settings=biow_db_settings,
                               optional_column="dateanalyzee=now()") # Set the date of last analysis
-                upload_results_to_db(upload_set=RNA_SEQ_UPLOAD,
+                upload_results_to_db(upload_set=RNA_SEQ_DUTP_UPLOAD if 'dUTP' in row[0] else RNA_SEQ_UPLOAD,
                                      uid=row[1],
                                      raw_data=os.path.join(biow_db_settings.settings['wardrobe'], biow_db_settings.settings['preliminary']),
                                      db_settings=biow_db_settings)

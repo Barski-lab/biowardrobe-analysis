@@ -112,15 +112,103 @@ def upload_iaintersect_result(self, uid, filename):
 
 
 def upload_get_stat (self, uid, filename):
+    # for DNA: TOTAL, ALIGNED, SUPRESSED, USED       > TOTAL, ALIGNED, SUPRESSED, SUPRESSED, USED
+    # for RNA: TOTAL, ALIGNED, RIBO, SUPRESSED, USED > TOTAL, ALIGNED, RIBO, SUPRESSED, USED
     self.db_settings.use_ems()
     with open(filename, 'r') as input_file:
         data = input_file.read().strip().split()
-        # TOTAL, ALIGNED, SUPRESSED, USED
+        if len(data) == 4: # we got file from DNA experiment
+            tagssuppressed = data[2]
+            data.insert(2, tagssuppressed)
         data.append(uid)
         self.db_settings.cursor.execute(
             "update labdata set tagstotal=%s,tagsmapped=%s,tagsribo=%s,tagssuppressed=%s,tagsused=%s where uid=%s",
-            (data[0], data[1], data[2], data[2], data[3], data[4]))
+                               (data[0],     data[1],      data[3],    data[4],          data[5],          data[6]))
         self.db_settings.conn.commit()
+
+
+def upload_rpkm (self, uid, filename):
+    self.db_settings.use_ems()
+    warnings.filterwarnings('ignore', category=MySQLdb.Warning)
+
+    table_basename = self.db_settings.settings['experimentsdb'] + '.`' + uid
+    # each suffix includes also '`' to complement '.`' in table_basename
+    suffixes = ['`_isoforms','`_genes','`_common_tss']
+    # Drop all VIEW and TABLE for this experiment
+    for suffix in suffixes:
+        self.db_settings.cursor.execute("DROP VIEW IF EXISTS " + table_basename + suffix)
+        self.db_settings.cursor.execute("DROP TABLE IF EXISTS " + table_basename + suffix)
+        self.db_settings.cursor.execute(""" CREATE TABLE """ + table_basename + suffix +
+                                        """ (refseq_id VARCHAR(100) NOT NULL,
+                                             gene_id VARCHAR(100) NOT NULL,
+                                             chrom VARCHAR(255) NOT NULL,
+                                             txStart INT NULL,
+                                             txEnd INT NULL,
+                                             strand VARCHAR(1),
+                                             TOT_R_0 FLOAT,
+                                             RPKM_0 FLOAT,
+                                             INDEX refseq_id_idx (refseq_id) using btree,
+                                             INDEX gene_id_idx (gene_id) using btree,
+                                             INDEX chr_idx (chrom) using btree,
+                                             INDEX txStart_idx (txStart) using btree,
+                                             INDEX txEnd_idx (txEnd) using btree
+                                            ) ENGINE=MyISAM DEFAULT CHARSET=utf8 """)
+
+    self.db_settings.conn.commit()
+
+    # Insert values into _isoforms table
+    SQL = " INSERT INTO " + table_basename + "`_isoforms" + " (refseq_id,gene_id,chrom,txStart,txEnd,strand,TOT_R_0,RPKM_0) VALUES"
+    with open(filename, 'r') as input_file:
+        for line in input_file.read().splitlines():
+            # RefseqId, GeneId, Chrom, TxStart, TxEnd, Strand, TotalReads, Rpkm
+            if not line or "RefseqId" in line or "GeneId" in line:
+                continue
+            self.db_settings.cursor.execute(SQL + " (%s,%s,%s,%s,%s,%s,%s,%s)", tuple(line.split(',')))
+        self.db_settings.conn.commit()
+
+    self.db_settings.cursor.execute(""" INSERT INTO """ + table_basename + "`_genes" +
+                                    """ SELECT
+                                            GROUP_CONCAT(DISTINCT refseq_id ORDER BY refseq_id SEPARATOR ',') AS refseq_id,
+                                            gene_id AS gene_id,
+                                            MAX(chrom) AS chrom,
+                                            MAX(txStart) AS txStart,
+                                            MAX(txEnd) AS txEnd,
+                                            MAX(strand) AS strand,
+                                            COALESCE(SUM(TOT_R_0),0) AS TOT_R_0,
+                                            COALESCE(SUM(RPKM_0),0) AS RPKM_0
+                                        FROM """ + table_basename + "`_isoforms" +
+                                    """ GROUP BY gene_id """)
+
+    self.db_settings.conn.commit()
+
+    self.db_settings.cursor.execute(""" INSERT INTO """ + table_basename + "`_common_tss" +
+                                    """ SELECT
+                                            GROUP_CONCAT(DISTINCT refseq_id ORDER BY refseq_id SEPARATOR ',') AS refseq_id,
+                                            GROUP_CONCAT(DISTINCT gene_id ORDER BY gene_id SEPARATOR ',') AS gene_id,
+                                            chrom AS chrom,
+                                            txStart AS txStart,
+                                            MAX(txEnd) AS txEnd,
+                                            strand AS strand,
+                                            COALESCE(SUM(TOT_R_0), 0) AS TOT_R_0,
+                                            COALESCE(SUM(RPKM_0), 0) AS RPKM_0 "
+                                        FROM """ + table_basename + "`_isoforms" +
+                                    """ WHERE strand = '+'
+                                        GROUP BY chrom , txStart , strand
+                                        UNION 
+                                        SELECT
+                                            GROUP_CONCAT(DISTINCT refseq_id ORDER BY refseq_id SEPARATOR ',') AS refseq_id,
+                                            GROUP_CONCAT(DISTINCT gene_id ORDER BY gene_id SEPARATOR ',') AS gene_id,
+                                            chrom AS chrom,
+                                            MIN(txStart) AS txStart,
+                                            txEnd AS txEnd,
+                                            strand AS strand,
+                                            COALESCE(SUM(TOT_R_0),0) AS TOT_R_0,
+                                            COALESCE(SUM(RPKM_0),0) AS RPKM_0
+                                        FROM """ + table_basename + "`_isoforms" +
+                                    """ WHERE strand = '-'
+                                        GROUP BY chrom,txEnd,strand""")
+
+    self.db_settings.conn.commit()
 
 
 def upload_atdp(self, uid, filename):
