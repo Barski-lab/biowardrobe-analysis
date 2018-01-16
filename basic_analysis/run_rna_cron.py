@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""ChIP-Seq SE/PE script"""
+"""RNA-Seq SE(dUTP)/PE(dUTP), script produces jobs for four workflows"""
 
 import os
 from DefFunctions import raise_if_dag_exists, update_status, submit_err, check_job
@@ -7,32 +7,28 @@ from Settings import Settings
 import datetime
 import sys
 from biow_exceptions import BiowBasicException
-from run_dna_func import submit_job
-from constants import (LIBSTATUS,
-                       CHIP_SEQ_SE_WORKFLOW,
-                       CHIP_SEQ_SE_TEMPLATE_JOB,
-                       CHIP_SEQ_PE_WORKFLOW,
-                       CHIP_SEQ_PE_TEMPLATE_JOB)
+from run_rna_func import submit_job
+from constants import (LIBSTATUS, RNA_SEQ_SET)
 from db_uploader import upload_results_to_db
-from db_upload_list import CHIP_SEQ_UPLOAD
+from db_upload_list import (RNA_SEQ_UPLOAD, RNA_SEQ_DUTP_UPLOAD)
 
 
 # Get access to DB
 biow_db_settings = Settings()
 print str(datetime.datetime.now())
 
+
 # Get all new experiments
 biow_db_settings.use_ems()
 biow_db_settings.cursor.execute((
-    "select e.etype,g.db,g.findex,g.annotation,l.uid,fragmentsizeexp,fragmentsizeforceuse,forcerun, "
-    "COALESCE(l.trim5,0), COALESCE(l.trim3,0),COALESCE(a.properties,0), COALESCE(l.rmdup,0),g.gsize, "
-    "COALESCE(control,0), COALESCE(control_id,'') "
-    "from labdata l "
-    "inner join (experimenttype e,genome g ) ON (e.id=experimenttype_id and g.id=genome_id) "
-    "LEFT JOIN (antibody a) ON (l.antibody_id=a.id) "
-    "where e.etype like 'DNA%' and libstatus in ({SUCCESS_DOWNLOAD},{START_PROCESS}) "
-    "and deleted=0 and COALESCE(egroup_id,'') <> '' and COALESCE(name4browser,'') <> '' "
-    "order by control DESC,dateadd").format(**LIBSTATUS))
+    "select e.etype, l.uid, g.db, g.findex, g.annotation, g.annottable, g.genome, l.forcerun, "
+    "COALESCE(l.trim5,0), COALESCE(l.trim3,0) "
+    "from labdata l, experimenttype e, genome g "
+    "where e.id=experimenttype_id and g.id=genome_id and e.etype like 'RNA%' "
+    "and libstatus in ({SUCCESS_DOWNLOAD},{START_PROCESS}) "
+    "and COALESCE(egroup_id,'') <> '' and COALESCE(name4browser,'') <> '' and deleted=0 "
+    "order by dateadd").format(**LIBSTATUS))
+
 rows = biow_db_settings.cursor.fetchall()
 
 # Generate job files for all found experiments
@@ -40,17 +36,16 @@ for row in rows:
     print "SUBMIT JOB ROW: " + str(row)
     sys.stdout.flush()
     try:
-        raise_if_dag_exists(uid=row[4],
-                            db_settings=biow_db_settings)
+        raise_if_dag_exists(uid=row[1], db_settings=biow_db_settings)
         submit_job (db_settings=biow_db_settings,
                    row=row,
                    raw_data=os.path.join(biow_db_settings.settings['wardrobe'], biow_db_settings.settings['preliminary']),
                    indices=os.path.join(biow_db_settings.settings['wardrobe'], biow_db_settings.settings['indices']),
-                   workflow=CHIP_SEQ_PE_WORKFLOW if 'pair' in row[0] else CHIP_SEQ_SE_WORKFLOW,
-                   template_job=CHIP_SEQ_PE_TEMPLATE_JOB if 'pair' in row[0] else CHIP_SEQ_SE_TEMPLATE_JOB,
+                   workflow=RNA_SEQ_SET[row[0]][0],
+                   template_job=RNA_SEQ_SET[row[0]][1],
                    threads=biow_db_settings.settings['maxthreads'],
                    jobs_folder=biow_db_settings.get_args().jobs) # path where to save generated job files
-        update_status(uid=row[4],
+        update_status(uid=row[1],
                       db_settings=biow_db_settings,
                       message='Scheduled',
                       code=LIBSTATUS["JOB_CREATED"],
@@ -60,15 +55,15 @@ for row in rows:
         continue
 
 
-# Get all running jobs
+# Get all running or just created jobs
 biow_db_settings.use_ems()
 biow_db_settings.cursor.execute((
     "select e.etype,l.uid,l.libstatustxt "
     "from labdata l "
     "inner join experimenttype e ON e.id=experimenttype_id "
-    "where e.etype like 'DNA%' and libstatus in ({JOB_CREATED}, {PROCESSING}) "
+    "where e.etype like 'RNA%' and libstatus in ({JOB_CREATED}, {PROCESSING}) "
     "and deleted=0 and COALESCE(egroup_id,'') <> '' and COALESCE(name4browser,'') <> '' "
-    "order by control DESC,dateadd").format(**LIBSTATUS))
+    "order by dateadd").format(**LIBSTATUS))
 rows = biow_db_settings.cursor.fetchall()
 
 # Check status of running jobs
@@ -77,14 +72,14 @@ for row in rows:
     try:
         libstatus, libstatustxt = check_job (uid=row[1],
                                              db_settings=biow_db_settings,
-                                             workflow=CHIP_SEQ_PE_WORKFLOW if 'pair' in row[0] else CHIP_SEQ_SE_WORKFLOW,
+                                             workflow=RNA_SEQ_SET[row[0]][0],
                                              jobs_folder=biow_db_settings.get_args().jobs) # path where to save generated job files
         if libstatus:
             update_status(uid=row[1],
                           message=libstatustxt,
                           code=libstatus,
                           db_settings=biow_db_settings)
-            update_status(uid=row[1],  # is used only to set dateanalyzes value which is laways NULL after we restarted or created new experiment
+            update_status(uid=row[1],  # is used only to set dateanalyzes value which is always NULL after we restarted or created new experiment
                           message=libstatustxt,
                           code=libstatus,
                           db_settings=biow_db_settings,
@@ -96,7 +91,7 @@ for row in rows:
                               code=libstatus,
                               db_settings=biow_db_settings,
                               optional_column="dateanalyzee=now()") # Set the date of last analysis
-                upload_results_to_db(upload_set=CHIP_SEQ_UPLOAD,
+                upload_results_to_db(upload_set=RNA_SEQ_DUTP_UPLOAD if 'dUTP' in row[0] else RNA_SEQ_UPLOAD,
                                      uid=row[1],
                                      raw_data=os.path.join(biow_db_settings.settings['wardrobe'], biow_db_settings.settings['preliminary']),
                                      db_settings=biow_db_settings)

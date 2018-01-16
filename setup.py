@@ -21,7 +21,8 @@ setup(
     packages=find_packages(),
     install_requires=[
         'testing.mysqld',
-        'regex'
+        'regex',
+        'mysql'
     ],
     zip_safe=False,
     cmdclass={'egg_info': tagger}

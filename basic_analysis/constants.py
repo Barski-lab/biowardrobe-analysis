@@ -12,6 +12,8 @@ LIBSTATUS = {
 }
 
 BOWTIE_INDICES = "bowtie"
+RIBO_SUFFIX = "_ribo"
+STAR_INDICES = "STAR"
 ANNOTATIONS = "annotations"
 JOBS_NEW = 'new'
 JOBS_SUCCESS = 'success'
@@ -76,3 +78,78 @@ CHIP_SEQ_GEN_BIGWIG_TEMPLATE_JOB = ('{{'
                   '"output_folder": "{output_folder}",' # required
                   '"uid": "{uid}"'                      # required
                 '}}')
+
+
+# RNA-Seq single end
+RNA_SEQ_SE_WORKFLOW = 'rnaseq-se.cwl'
+RNA_SEQ_SE_TEMPLATE_JOB = ('{{'
+                  '"fastq_file": {{"class": "File", "location": "{fastq_file_upstream}", "format": "http://edamontology.org/format_1930"}},'
+                  '"star_indices_folder": {{"class": "Directory", "location": "{star_indices_folder}"}},'
+                  '"bowtie_indices_folder": {{"class": "Directory", "location": "{bowtie_indices_folder}"}},'
+                  '"chrom_length_file": {{"class": "File", "location": "{chrom_length}", "format": "http://edamontology.org/format_2330"}},'
+                  '"annotation_file": {{"class": "File", "location": "{annotation_input_file}", "format": "http://edamontology.org/format_3475"}},'
+                  '"exclude_chr": "{exclude_chr}",'
+                  '"clip_3p_end": {clip_3p_end},'
+                  '"clip_5p_end": {clip_5p_end},'
+                  '"threads": {threads},'
+                  '"output_folder": "{output_folder}",' # required
+                  '"uid": "{uid}"'                      # required
+                '}}')
+
+# RNA-Seq single end dUTP
+RNA_SEQ_SE_DUTP_WORKFLOW = 'rnaseq-se-dutp.cwl'
+RNA_SEQ_SE_DUTP_TEMPLATE_JOB = ('{{'
+                  '"fastq_file": {{"class": "File", "location": "{fastq_file_upstream}", "format": "http://edamontology.org/format_1930"}},'
+                  '"star_indices_folder": {{"class": "Directory", "location": "{star_indices_folder}"}},'
+                  '"bowtie_indices_folder": {{"class": "Directory", "location": "{bowtie_indices_folder}"}},'
+                  '"chrom_length_file": {{"class": "File", "location": "{chrom_length}", "format": "http://edamontology.org/format_2330"}},'
+                  '"annotation_file": {{"class": "File", "location": "{annotation_input_file}", "format": "http://edamontology.org/format_3475"}},'
+                  '"exclude_chr": "{exclude_chr}",'
+                  '"clip_3p_end": {clip_3p_end},'
+                  '"clip_5p_end": {clip_5p_end},'
+                  '"threads": {threads},'
+                  '"output_folder": "{output_folder}",' # required
+                  '"uid": "{uid}"'                      # required
+                '}}')
+
+
+# RNA-Seq paired end
+RNA_SEQ_PE_WORKFLOW = 'rnaseq-pe.cwl'
+RNA_SEQ_PE_TEMPLATE_JOB = ('{{'
+                  '"fastq_file_upstream": {{"class": "File", "location": "{fastq_file_upstream}", "format": "http://edamontology.org/format_1930"}},'
+                  '"fastq_file_downstream": {{"class": "File", "location": "{fastq_file_downstream}", "format": "http://edamontology.org/format_1930"}},'
+                  '"star_indices_folder": {{"class": "Directory", "location": "{star_indices_folder}"}},'
+                  '"bowtie_indices_folder": {{"class": "Directory", "location": "{bowtie_indices_folder}"}},'
+                  '"chrom_length_file": {{"class": "File", "location": "{chrom_length}", "format": "http://edamontology.org/format_2330"}},'
+                  '"annotation_file": {{"class": "File", "location": "{annotation_input_file}", "format": "http://edamontology.org/format_3475"}},'
+                  '"exclude_chr": "{exclude_chr}",'
+                  '"clip_3p_end": {clip_3p_end},'
+                  '"clip_5p_end": {clip_5p_end},'
+                  '"threads": {threads},'
+                  '"output_folder": "{output_folder}",' # required
+                  '"uid": "{uid}"'                      # required
+                '}}')
+
+# RNA-Seq paired end dUTP
+RNA_SEQ_PE_DUTP_WORKFLOW = 'rnaseq-pe-dutp.cwl'
+RNA_SEQ_PE_DUTP_TEMPLATE_JOB = ('{{'
+                  '"fastq_file_upstream": {{"class": "File", "location": "{fastq_file_upstream}", "format": "http://edamontology.org/format_1930"}},'
+                  '"fastq_file_downstream": {{"class": "File", "location": "{fastq_file_downstream}", "format": "http://edamontology.org/format_1930"}},'
+                  '"star_indices_folder": {{"class": "Directory", "location": "{star_indices_folder}"}},'
+                  '"bowtie_indices_folder": {{"class": "Directory", "location": "{bowtie_indices_folder}"}},'
+                  '"chrom_length_file": {{"class": "File", "location": "{chrom_length}", "format": "http://edamontology.org/format_2330"}},'
+                  '"annotation_file": {{"class": "File", "location": "{annotation_input_file}", "format": "http://edamontology.org/format_3475"}},'
+                  '"exclude_chr": "{exclude_chr}",'
+                  '"clip_3p_end": {clip_3p_end},'
+                  '"clip_5p_end": {clip_5p_end},'
+                  '"threads": {threads},'
+                  '"output_folder": "{output_folder}",' # required
+                  '"uid": "{uid}"'                      # required
+                '}}')
+
+RNA_SEQ_SET = {
+    "RNA-Seq":           (RNA_SEQ_SE_WORKFLOW, RNA_SEQ_SE_TEMPLATE_JOB),
+    "RNA-Seq dUTP":      (RNA_SEQ_SE_DUTP_WORKFLOW, RNA_SEQ_SE_DUTP_TEMPLATE_JOB),
+    "RNA-Seq pair":      (RNA_SEQ_PE_WORKFLOW, RNA_SEQ_PE_TEMPLATE_JOB),
+    "RNA-Seq dUTP pair": (RNA_SEQ_PE_DUTP_WORKFLOW, RNA_SEQ_PE_DUTP_TEMPLATE_JOB)
+}
