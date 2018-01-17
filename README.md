@@ -203,9 +203,9 @@ updated to display correct icon
 13. Update crontab job
     ```
         # For ChIP-Seq analysis
-        */1 * * * *    . ~/.profile && run_dna_cron.py -c /etc/wardrobe/wardrobe -j /home/biowardrobe/cwl/jobs >> /wardrobe/tmp/RunAirflowDNA.log 2>&1
+        */1 * * * *    . ~/.profile && run-dna-cron -c /etc/wardrobe/wardrobe -j /home/biowardrobe/cwl/jobs >> /wardrobe/tmp/RunAirflowDNA.log 2>&1
         # For RNA-Seq analysis
-        */1 * * * *    . ~/.profile && run_rna_cron.py -c /etc/wardrobe/wardrobe -j /home/biowardrobe/cwl/jobs >> /wardrobe/tmp/RunAirflowDNA.log 2>&1
+        */1 * * * *    . ~/.profile && run-rna-cron -c /etc/wardrobe/wardrobe -j /home/biowardrobe/cwl/jobs >> /wardrobe/tmp/RunAirflowDNA.log 2>&1
     ```
     > Both the `run_dna_cron.py` and `run_rna_cron.py` scripts use BioWardrobe configuration file
       set as `--config`/`-c` argument (`/etc/wardrobe/wardrobe` by default).
