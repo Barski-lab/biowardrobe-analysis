@@ -22,7 +22,7 @@ Usage:
       $ cd biowardrobe-analysis
       $ pip install .
       ```
-    > This will install `run-rna-cron` and `run-rna-cron` into `/usr/local/bin/`
+    > This will install `run-dna-cron` and `run-rna-cron` into `/usr/local/bin/`
 
 ### Configuration and running
 ***To make configuration process easier we are assuming that:***
