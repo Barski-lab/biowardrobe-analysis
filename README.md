@@ -1,177 +1,188 @@
 ## BioWardorbe Basic Analysis
 
-Note:
-1. Create **/wardrobe/indices/[BOWTIE_INDICES]** folder
-and place there subfolders **dm3**, **mm10**, **mm10c**, **hg19**, 
-**hg19c** etc. (corresponds to `select findex from ems.genome;`).
-In each subfolders make `ln -s` on real bowtie indices and
-put **chrNameLength.txt** (**CHR_LENGTH_GENERIC_TSV**).
-We need the following structure to allow mount indices folder to
-container which runs Bowtie.
-    - ***NOTE***: make sure that docker can follow soft links when they are mounted to container.
-      If not - copy files instead of linking
+### General
+`run_dna_cron.py` and `run_rna_cron.py` scripts should be set as cron jobs to
+periodically perform the following operations:
+- check newly added **ChIP-Seq** / **RNA-Seq** experiments, generate and export JSON job files;
+- check the state of all running **ChIP-Seq** / **RNA-Seq** experiments, update their
+states in BioWardrobe DB;
+- when experiment is finished with success, upload generated data to BioWardrobe DB
 
-    For running **RNA-Seq** analysis the ribosomal bowtie indices should be added.
-    In **/wardrobe/indices/[BOWTIE_INDICES]** create subfolders **dm3_ribo**,
-    **mm10_ribo**, **mm10c_ribo**, **hg19_ribo**, **hg19c_ribo** etc, where **_ribo**
-    coressponds to **RIBO_SUFFIX** from the **constants.py**. Place there ribosomal bowtie indices.
+Usage:
+```bash
+  -c CONFIG, --config CONFIG BioWardrobe configuration file
+  -j JOBS,   --jobs   JOBS   Folder to export generated jobs
+```
+
+
+### Installation
+1. Install **biowardrobe-analysis** from source
+  ```sh
+  $ git clone https://github.com/Barski-lab/biowardrobe-analysis.git
+  $ cd biowardrobe-analysis
+  $ pip install .
+  ```
+
+### Configuration and running
+***To make configuration process easier we are assuming that:***
+1. you home directory is `/home/biowardrobe/`
+2. you have already installed and configured:
+    * ***[BioWardrobe](https://github.com/Barski-lab/biowardrobe)***
+        * BioWardrobe configuration file is saved as `/etc/wardrobe/wardrobe`
+        and has the following structure (the order of the first five not commented lines is
+        mandatory)
+            ```
+                #MySQL host to connect
+                127.0.0.1
+                
+                #MySQL User (Pay attention, the user should also have read access to Airflow DB)
+                username
+                
+                #MySQL password
+                userpassword
+                
+                #Wardrobe DB
+                ems
+                
+                #MySQL port
+                3306
+                
+                #Custom additional configuration data
+             ```
+                
+        * the user who run `run_dna_cron.py` and `run_rna_cron.py` scripts has read access
+        to BioWardrobe configuration file
+        * BioWardrobe DB `ems.settings` table includes
+            ```
+            +---------------+-------------+------------------------------------------------------------------------+
+            | key           | value       | description                                                            |
+            +---------------+-------------+------------------------------------------------------------------------+
+            | indices       | /indices    | Relative path to the directory for mapping software indices files      |
+            | preliminary   | /RAW-DATA   | Relative path where fastq and all preliminary results are stored       |
+            | wardrobe      | /wardrobe   | Absolute path to the Wardrobe directory                                |
+            +---------------+-------------+------------------------------------------------------------------------+
+            ```
+    * ***[cwl-airflow](https://github.com/Barski-lab/cwl-airflow)***
+        * Airflow DB with the name `airflow` is saved on the same MySQL server as
+        BioWardrobe DB and is accessable by the user set in BioWardrobe
+        configuration file
+        * Airflow configuratin file `airflow.cfg` includes fields 
+            * `cwl_jobs = /home/biowardrobe/cwl/jobs`
+            * `cwl_workflows = /home/biowardrobe/cwl/workflows`
+        * Directory set as `cwl_jobs` in `airflow.cfg` has the following structure
+            ```
+            /home/biowardrobe/cwl/jobs
+                                     ├── fail
+                                     ├── new
+                                     ├── running
+                                     └── success
+            ```
+    * ***[biowardrobe-analysis](https://github.com/Barski-lab/biowardrobe-analysis.git)***
+        * the ***[constants.py](https://github.com/Barski-lab/biowardrobe-analysis/blob/master/basic_analysis/constants.py)***
+          includes the following constants:
+            ```python
+            BOWTIE_INDICES = "bowtie"
+            RIBO_SUFFIX = "_ribo"
+            STAR_INDICES = "STAR"
+            ANNOTATIONS = "annotations"
+            JOBS_NEW = 'new'
+            JOBS_SUCCESS = 'success'
+            JOBS_FAIL = 'fail'
+            JOBS_RUNNING = 'running'
+            CHR_LENGTH_GENERIC_TSV = "chrNameLength.txt"
+            ANNOTATION_GENERIC_TSV = "refgene.tsv"
+            ```
+
+3. You have cloned the latest ***[Workflows](https://github.com/Barski-lab/workflows)***
+into `/home/biowardrobe/cwl/workflows` (currently it's recommended to use
+`v1.0.2` branch instead of `master`)
+
+#### Steps:
+1. To allow `run_dna_cron.py` and `run_rna_cron.py` scripts find the Airflow DB, the following record
+   should be added into `ems.settings` table
+    ```sql
+        INSERT INTO ems.settings  VALUES ('airflowdb','airflow','Database name to be used by Airflow', 0, 3);
+    ```
+    > where `airflowdb` is the key by which the name of the Airflow DB `airflow` is returned.
+      The Airflow DB is used to check the state of the running workflows and their steps
+      (performs select query from  `dag_run` and `task_instance` tables).
     
+2. Create **/wardrobe/indices/bowtie** folder
+   > This folder name is formed as  
+   > `ems.settings[wardrobe] + ems.settings[indices] + constants.py[BOWTIE_INDICES]`
 
-2. Create **/wardrobe/indices/[ANNOTATIONS]** folder and place there subfolders
-***dm3***, ***mm10***, ***mm10c***, ***hg19***, 
-***hg19c*** etc. (corresponds to `select findex from ems.genome;`).
-Each of these subfolders may include various annotation files
-for correspondent genome. Tab-separated files should be named **refgene.tsv**
-(**ANNOTATION_GENERIC_TSV**)
+3. Get the genome types list as `SELECT findex FROM ems.genome`. For each genome type
+create subfolder within **/wardrobe/indices/bowtie**. The subfolder name should
+be equal to the genome type received from SELECT query
+   >  For example, if `SELECT` query returned `hg19`, `mm10`, `dm3`, your
+      directories should look like:  
+      `/wardrobe/indices/bowtie/hg19`  
+      `/wardrobe/indices/bowtie/mm10`  
+      `/wardrobe/indices/bowtie/dm3`
 
-3. Insert into ems.settings new record, which points to Airflow DB name
-```sql
-    INSERT INTO ems.settings  VALUES ('airflowdb','airflow','Database name to be used by Airflow', 0, 3);
-```
+4. In each subfolder created in the previous step put corespondent
+to the genome type Bowtie indices and TAB-delimited chromosome length
+file **chrNameLength.txt**
+    > The name for chromosome length file should be equal to
+      `CHR_LENGTH_GENERIC_TSV` from `constants.py`
 
-4. Make sure that you've pulled all docker images used by workflow.
-If not, it'll take a lot of time to pull it while executing task and it
-will be marked as failed one
+5. For running **RNA-Seq** analysis the ribosomal Bowtie indices should be added too.
+For each of the genome type folders in **/wardrobe/indices/bowtie** create
+additional folder with the suffix **_ribo**
+    > Suffix `_ribo` should be equal to the `RIBO_SUFFIX` from `constants.py`  
+      For example, if you already have directories `hg19`, `mm10`, `dm3`
+      in `/wardrobe/indices/bowtie/` folder, you should add  
+      `/wardrobe/indices/bowtie/hg19_ribo`  
+      `/wardrobe/indices/bowtie/mm10_ribo`  
+      `/wardrobe/indices/bowtie/dm3_ribo`
 
-5. Update views for Genome Browser with `biowardrobe_patched_view` scripts
-6. Because the new status was added JOB_CREATED (use libstatus=1010), `app.css` should be
-updated to display correct icon (gear_warning.png --> gear_new.png)
-```bash
-.gear-1-10 {
-    background-image: url(images/gear_new.png) !important;
-    width: 16px;
-    height: 16px;
-}
-```
+6. In each subfolder created in the previous step put corespondent
+to the genome type ribosomal Bowtie indices
+    
+7. Create **/wardrobe/indices/annotations** folder
+   > This folder name is formed as  
+   > `ems.settings[wardrobe] + ems.settings[indices] + constants.py[ANNOTATIONS]` 
 
-### Installation on virtual machine in edit mode
-1. Copy source code for the following repositories
-```
-    git clone https://github.com/Barski-lab/biowardrobe-analysis.git
-    git clone https://github.com/Barski-lab/incubator-airflow.git
-    git clone https://github.com/SciDAP/workflows.git
-```
- 
-2. Make sure ***pip*** is installed or install it with the following commands
-```
-    wget --no-check-certificate https://bootstrap.pypa.io/get-pip.py
-    sydo get-pip.py python
-```
-4. Make sure that ***nodejs*** in installed 
-```bash
-    sudo apt-get install nodejs
-```
-5. If you are planning to use MySQL DB insatall the following dependency
-```bash
-    sudo pip install mysql 
-```
-6. Install ***incubator-airflow*** in edit mode
-```
-    sudo pip install mysql
-    cd incubator-airflow
-    sudo pip install -e .
-```
->> if you have problems with ***mysql-python*** (mysql_config not found) make sure that
- ***PATH*** includes path to ***mysql_config***. If there is no ***mysql_config***,
- run the following command
->>```bash
->>    sudo apt-get install libmysqlclient-dev -y
->>```
->>or
->>```bash
->>    sudo apt-get install libmariadbclient-dev -y
->>```
->> if you have problems with ***Python.h*** not found, run the following command
->>```bash
->>    sudo apt-get install python-dev
->>```
-7. Install ***biowardrobe-analysis*** in edit mode
-```
-    cd biowardrobe-analysis
-    sudo pip install -e .
-```
-8. Create the following folders. Make sure that user has permissions to w/r to these folder
-```bash
-    mkdir -p ~/cwl/jobs/fail ~/cwl/jobs/new ~/cwl/jobs/running ~/cwl/jobs/success
-    mkdir -p ~/cwl/output ~/cwl/tmp ~/cwl/workflows
-```
-```bash
-    cwl
-    ├── jobs
-    │   ├── fail
-    │   ├── new
-    │   ├── running
-    │   └── success
-    ├── output
-    ├── tmp
-    └── workflows
-```
-9. Move ***workflow*** repository to `~/cwl/workflows/`
-10. Update `~/airflow/airflow.cfg`
-```bash
-dags_folder = /home/biowardrobe/workspace/airflow/incubator-airflow/airflow/cwl_runner/cwl_dag/cwl_dag.py
-executor = LocalExecutor
-﻿sql_alchemy_conn = mysql://wardrobe:biowardrobe@127.0.0.1:3306/airflow
-dags_are_paused_at_creation = False
-load_examples = False
+8. Get the genome types list as `SELECT findex FROM ems.genome` (you should
+already have this list from some step before). For each genome type
+create subfolder within **/wardrobe/indices/annotations**. The subfolder name should
+be equal to the genome type received from SELECT query
+   >  For example, if `SELECT` query returned `hg19`, `mm10`, `dm3`, your
+      directories should look like:  
+      `/wardrobe/indices/annotations/hg19`  
+      `/wardrobe/indices/annotations/mm10`  
+      `/wardrobe/indices/annotations/dm3`
 
-﻿[biowardrobe]
-cwl_jobs = /home/biowardrobe/cwl/jobs
-cwl_workflows = /home/biowardrobe/cwl/workflows
-output_folder = /home/biowardrobe/cwl/output
-tmp_folder = /home/biowardrobe/cwl/tmp
-max_jobs_to_run = 1
-log_level = INFO
-strict = False
+9. In each subfolder created in the previous step put corespondent
+to the genome type TAB-delimited annotation file **refgene.tsv**.
+This file is not mandatory to be sorted. 
+    > The TAB-delimited annotation file name should be equal to
+      `ANNOTATION_GENERIC_TSV` from `constants.py`
 
-```
-11. Create ***airflow*** database
-```bash
-    CREATE DATABSE AIRFLOW;
-```
-12. Init airflow database
-```bash
-    airflow initdb
-```
-13. [Install](https://linoxide.com/ubuntu-how-to/install-setup-docker-ubuntu-15-04/) ***Docker***
-- Install packages to allow apt to use a repository over HTTPS
-```bash
-    sudo apt-get install \
-        apt-transport-https \
-        ca-certificates \
-        curl \
-        software-properties-common
-```
-- Add Docker’s official GPG key
-```bash
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-```
-- Use the following command to set up the stable repository. You always need
-the stable repository, even if you want to install edge builds as well.
-```bash
-    sudo add-apt-repository \
-       "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
-       $(lsb_release -cs) \
-       stable"
-```
-- Update the apt package index.
-```bash
-    sudo apt-get update
-```
-- Install the latest version of Docker
-```bash
-    sudo apt-get install docker.io
-```
-- Start doker service
-```bash
-    sudo service docker start
-```
-- Add current user to docker group
-```bash
-    sudo usermod -a -G docker biowardrobe
-```
-14. Update crontab job
-```
-    ﻿#*/10 * * * *    . ~/.profile && /wardrobe/bin/RunDNA.py >> /wardrobe/tmp/RunDNA.log 2>&1
-    */1 * * * *    . ~/.profile && /home/biowardrobe/workspace/airflow/biowardrobe-analysis/basic_analysis/run_dna_cron.py /home/biowardrobe/cwl/jobs >> /wardrobe/tmp/RunAirflowDNA.log 2>&1
-```
+10. To make Genome Browser to display genome coverage tracks from bigWig files, apply patches from
+***[biowardrobe_patched_view](https://github.com/Barski-lab/biowardrobe-analysis/tree/master/sql_patch/biowardrobe_patched_view)***
+
+11. Because the new status `"JOB_CREATED": 1010` was added into `LIBSTATUS` from `constants.py`,
+***[app.css](https://github.com/Barski-lab/biowardrobe/blob/master/EMS/ems/app.css)*** file from
+***[BioWardrobe](https://github.com/Barski-lab/biowardrobe)*** should be
+updated to display correct icon
+    ```bash
+    .gear-1-10 {
+        background-image: url(images/gear_new.png) !important;
+        width: 16px;
+        height: 16px;
+    }
+    ```
+    > Basically you should change `gear_warning.png` to `gear_new.png` for `.gear-1-10`
+      
+12. Update crontab job
+    ```
+        # For ChIP-Seq analysis
+        */1 * * * *    . ~/.profile && run_dna_cron.py -c /etc/wardrobe/wardrobe -j /home/biowardrobe/cwl/jobs >> /wardrobe/tmp/RunAirflowDNA.log 2>&1
+        # For RNA-Seq analysis
+        */1 * * * *    . ~/.profile && run_rna_cron.py -c /etc/wardrobe/wardrobe -j /home/biowardrobe/cwl/jobs >> /wardrobe/tmp/RunAirflowDNA.log 2>&1
+    ```
+    > Both the `run_dna_cron.py` and `run_rna_cron.py` scripts use BioWardrobe configuration file
+      set as `--config`/`-c` argument (`/etc/wardrobe/wardrobe` by default).
+      This file is used to get access to BioWardrobe DB. Make sure that scripts have read access
+      to this configuration file.
