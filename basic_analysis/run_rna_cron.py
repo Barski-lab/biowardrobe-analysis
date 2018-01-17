@@ -87,7 +87,7 @@ def main():
                               optional_where="and dateanalyzes is null")
                 if libstatus==LIBSTATUS["SUCCESS_PROCESS"]:
                     update_status(uid=row[1],
-                                  message=libstatustxt,
+                                  message=libstatustxt + ":upgraded",
                                   code=libstatus,
                                   db_settings=biow_db_settings,
                                   optional_column="dateanalyzee=now()") # Set the date of last analysis
