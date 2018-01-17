@@ -25,5 +25,11 @@ setup(
         'mysql'
     ],
     zip_safe=False,
-    cmdclass={'egg_info': tagger}
+    cmdclass={'egg_info': tagger},
+    entry_points={
+        'console_scripts': [
+            "run-dna-cron=basic_analysis.run_dna_cron:main",
+            "run-rna-cron=basic_analysis.run_rna_cron:main"
+        ]
+    }
 )
