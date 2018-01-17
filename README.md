@@ -174,8 +174,33 @@ updated to display correct icon
     }
     ```
     > Basically you should change `gear_warning.png` to `gear_new.png` for `.gear-1-10`
+
+12. To drop all of the created by **biowardrobe-analysis** tables from BioWardrobe DB, as long as
+    all of tables from Airflow DB, related to the expeminent to be restarted,
+    update original ***[ForceRun.py](https://github.com/Barski-lab/biowardrobe/blob/master/scripts/ForceRun.py)***
+    with the following commands
+    ```python
+    # Airflow specific tables
+    settings.cursor.execute("DROP TABLE IF EXISTS `" + DB[0] + "`.`" + string.replace(UID, "-", "_") + "_f_wtrack`;")
+    settings.cursor.execute("DROP TABLE IF EXISTS `" + DB[0] + "`.`" + string.replace(UID, "-", "_") + "_upstream_f_wtrack`;")
+    settings.cursor.execute("DROP TABLE IF EXISTS `" + DB[0] + "`.`" + string.replace(UID, "-", "_") + "_downstream_f_wtrack`;")
+    ```
+    ```python
+    # Clean up airflowdb
+    airflowDB = settings.settings["airflowdb"]
+    settings.cursor.execute("DELETE FROM `{0}`.`xcom` WHERE dag_id LIKE '%{1}%';".format(airflowDB,UID))
+    settings.cursor.execute("DELETE FROM `{0}`.`task_instance` WHERE dag_id LIKE '%{1}%';".format(airflowDB,UID))
+    settings.cursor.execute("DELETE FROM `{0}`.`task_fail` WHERE dag_id LIKE '%{1}%';".format(airflowDB,UID))
+    settings.cursor.execute("DELETE FROM `{0}`.`sla_miss` WHERE dag_id LIKE '%{1}%';".format(airflowDB,UID))
+    settings.cursor.execute("DELETE FROM `{0}`.`log` WHERE dag_id LIKE '%{1}%';".format(airflowDB,UID))
+    settings.cursor.execute("DELETE FROM `{0}`.`job` WHERE dag_id LIKE '%{1}%';".format(airflowDB,UID))
+    settings.cursor.execute("DELETE FROM `{0}`.`dag_run` WHERE dag_id LIKE '%{1}%';".format(airflowDB,UID))
+    settings.cursor.execute("DELETE FROM `{0}`.`dag` WHERE dag_id LIKE '%{1}%';".format(airflowDB,UID))
+    ```
+    > The location to insert this commands can be checked from updated
+      ***[ForceRun.py](https://github.com/Barski-lab/biowardrobe-analysis/blob/master/basic_analysis/ForceRun.py)***
       
-12. Update crontab job
+13. Update crontab job
     ```
         # For ChIP-Seq analysis
         */1 * * * *    . ~/.profile && run_dna_cron.py -c /etc/wardrobe/wardrobe -j /home/biowardrobe/cwl/jobs >> /wardrobe/tmp/RunAirflowDNA.log 2>&1
