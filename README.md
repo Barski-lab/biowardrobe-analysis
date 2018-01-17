@@ -17,11 +17,12 @@ Usage:
 
 ### Installation
 1. Install **biowardrobe-analysis** from source
-  ```sh
-  $ git clone https://github.com/Barski-lab/biowardrobe-analysis.git
-  $ cd biowardrobe-analysis
-  $ pip install .
-  ```
+      ```sh
+      $ git clone https://github.com/Barski-lab/biowardrobe-analysis.git
+      $ cd biowardrobe-analysis
+      $ pip install .
+      ```
+    > This will install `run-rna-cron` and `run-rna-cron` into `/usr/local/bin/`
 
 ### Configuration and running
 ***To make configuration process easier we are assuming that:***
