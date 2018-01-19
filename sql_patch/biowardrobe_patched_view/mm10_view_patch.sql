@@ -15,9 +15,9 @@ SELECT replace(concat(`l`.`uid`,'_wtrack'),'-','_') AS `tableName`,
        0 AS `useScore`,
        0 AS `private`,
        0 AS `restrictCount`,
-       '' AS `restrictList`,
-       '' AS `url`,
-       '' AS `html`,
+       NULL AS `restrictList`,
+       NULL AS `url`,
+       NULL AS `html`,
        `l`.`egroup_id` AS `grp`,
        0 AS `canPack`,
        'autoScale on
@@ -37,7 +37,7 @@ SELECT replace(concat(`l`.`uid`,'_f_wtrack'),'-','_') AS `tableName`,
        `l`.`name4browser` AS `shortLabel`,
        'bigWig' AS `type`,
        `l`.`name4browser` AS `longLabel`,
-       2 AS `visibility`,
+       0 AS `visibility`,
        2 AS `priority`,
        30 AS `colorR`,
        70 AS `colorG`,
@@ -55,7 +55,7 @@ SELECT replace(concat(`l`.`uid`,'_f_wtrack'),'-','_') AS `tableName`,
        0 AS `canPack`,
        concat('track ',replace(concat(`l`.`uid`,'_f_wtrack'),'-','_'),'
                autoScale on
-               visibility full
+               visibility hide
                windowingFunction maximum') AS `settings`
 FROM ((`ems`.`labdata` `l`
        JOIN `ems`.`experimenttype` `et`)
@@ -66,13 +66,14 @@ WHERE ((`l`.`deleted` = 0)
        AND (`et`.`etype` LIKE '%RNA%')
        AND (`et`.`etype` NOT LIKE '%dUTP%')
        AND (`l`.`genome_id` = `g`.`id`)
+       AND (`l`.`egroup_id` IS NOT NULL)
        AND (`g`.`db` LIKE 'mm%'))
 UNION
-SELECT replace(concat(`l`.`uid`,'_grp'),'-','_') AS `tableName`,
+SELECT replace(concat(`l`.`uid`,'_multi_f_wtrack'),'-','_') AS `tableName`,
        `l`.`name4browser` AS `shortLabel`,
        'bigWig' AS `type`,
        `l`.`name4browser` AS `longLabel`,
-       2 AS `visibility`,
+       0 AS `visibility`,
        2 AS `priority`,
        30 AS `colorR`,
        70 AS `colorG`,
@@ -88,11 +89,11 @@ SELECT replace(concat(`l`.`uid`,'_grp'),'-','_') AS `tableName`,
        NULL AS `html`,
        `l`.`egroup_id` AS `grp`,
        0 AS `canPack`,
-       concat('track ',replace(concat(`l`.`uid`,'_grp'),'-','_'),'
+       concat('track ',replace(concat(`l`.`uid`,'_multi_f_wtrack'),'-','_'),'
                group ',`l`.`egroup_id`,'
                container multiWig
                autoScale on
-               visibility full
+               visibility hide
                windowingFunction maximum') AS `settings`
 FROM ((`ems`.`labdata` `l`
        JOIN `ems`.`experimenttype` `et`)
@@ -102,13 +103,14 @@ WHERE ((`l`.`deleted` = 0)
        AND (`l`.`experimenttype_id` = `et`.`id`)
        AND (`et`.`etype` LIKE '%RNA%dUTP%')
        AND (`l`.`genome_id` = `g`.`id`)
+       AND (`l`.`egroup_id` IS NOT NULL)
        AND (`g`.`db` LIKE 'mm%'))
 UNION
 SELECT replace(concat(`l`.`uid`,'_upstream_f_wtrack'),'-','_') AS `tableName`,
        `l`.`name4browser` AS `shortLabel`,
        'bigWig' AS `type`,
        `l`.`name4browser` AS `longLabel`,
-       2 AS `visibility`,
+       0 AS `visibility`,
        2 AS `priority`,
        30 AS `colorR`,
        70 AS `colorG`,
@@ -125,7 +127,7 @@ SELECT replace(concat(`l`.`uid`,'_upstream_f_wtrack'),'-','_') AS `tableName`,
        `l`.`egroup_id` AS `grp`,
        0 AS `canPack`,
        concat('track ',replace(concat(`l`.`uid`,'_upstream_f_wtrack'),'-','_'),'
-               parent ',replace(concat(`l`.`uid`,'_grp'),'-','_')) AS `settings`
+               parent ',replace(concat(`l`.`uid`,'_multi_f_wtrack'),'-','_')) AS `settings`
 FROM ((`ems`.`labdata` `l`
        JOIN `ems`.`experimenttype` `et`)
        JOIN `ems`.`genome` `g`)
@@ -134,13 +136,14 @@ WHERE ((`l`.`deleted` = 0)
        AND (`l`.`experimenttype_id` = `et`.`id`)
        AND (`et`.`etype` LIKE '%RNA%dUTP%')
        AND (`l`.`genome_id` = `g`.`id`)
+       AND (`l`.`egroup_id` IS NOT NULL)
        AND (`g`.`db` LIKE 'mm%'))
 UNION
 SELECT replace(concat(`l`.`uid`,'_downstream_f_wtrack'),'-','_') AS `tableName`,
        `l`.`name4browser` AS `shortLabel`,
        'bigWig' AS `type`,
        `l`.`name4browser` AS `longLabel`,
-       2 AS `visibility`,
+       0 AS `visibility`,
        2 AS `priority`,
        30 AS `colorR`,
        70 AS `colorG`,
@@ -157,7 +160,7 @@ SELECT replace(concat(`l`.`uid`,'_downstream_f_wtrack'),'-','_') AS `tableName`,
        `l`.`egroup_id` AS `grp`,
        0 AS `canPack`,
        concat('track ',replace(concat(`l`.`uid`,'_downstream_f_wtrack'),'-','_'),'
-               parent ',replace(concat(`l`.`uid`,'_grp'),'-','_')) AS `settings`
+               parent ',replace(concat(`l`.`uid`,'_multi_f_wtrack'),'-','_')) AS `settings`
 FROM ((`ems`.`labdata` `l`
        JOIN `ems`.`experimenttype` `et`)
        JOIN `ems`.`genome` `g`)
@@ -166,6 +169,7 @@ WHERE ((`l`.`deleted` = 0)
        AND (`l`.`experimenttype_id` = `et`.`id`)
        AND (`et`.`etype` LIKE '%RNA%dUTP%')
        AND (`l`.`genome_id` = `g`.`id`)
+       AND (`l`.`egroup_id` IS NOT NULL)
        AND (`g`.`db` LIKE 'mm%'))
 UNION
 SELECT replace(concat(`l`.`uid`,'_grp'),'-','_') AS `tableName`,
@@ -183,9 +187,9 @@ SELECT replace(concat(`l`.`uid`,'_grp'),'-','_') AS `tableName`,
        0 AS `useScore`,
        0 AS `private`,
        0 AS `restrictCount`,
-       '' AS `restrictList`,
-       '' AS `url`,
-       '' AS `html`,
+       NULL AS `restrictList`,
+       NULL AS `url`,
+       NULL AS `html`,
        `l`.`egroup_id` AS `grp`,
        0 AS `canPack`,
        concat('compositeTrack on
@@ -219,9 +223,9 @@ SELECT replace(concat(`l`.`uid`,'_gcvrg'),'-','_') AS `tableName`,
        0 AS `useScore`,
        0 AS `private`,
        0 AS `restrictCount`,
-       '' AS `restrictList`,
-       '' AS `url`,
-       '' AS `html`,
+       NULL AS `restrictList`,
+       NULL AS `url`,
+       NULL AS `html`,
        `l`.`egroup_id` AS `grp`,
        0 AS `canPack`,
        concat('parent ',replace(concat(`l`.`uid`,'_grp'),'-','_'),'
@@ -254,9 +258,9 @@ SELECT replace(concat(`l`.`uid`,'_ilnds'),'-','_') AS `tableName`,
        0 AS `useScore`,
        0 AS `private`,
        0 AS `restrictCount`,
-       '' AS `restrictList`,
-       '' AS `url`,
-       '' AS `html`,
+       NULL AS `restrictList`,
+       NULL AS `url`,
+       NULL AS `html`,
        `l`.`egroup_id` AS `grp`,
        0 AS `canPack`,
        concat('parent ',replace(concat(`l`.`uid`,'_grp'),'-','_'),'
@@ -289,9 +293,9 @@ SELECT replace(concat(`l`.`uid`,'_wtrack'),'-','_') AS `tableName`,
        0 AS `useScore`,
        0 AS `private`,
        0 AS `restrictCount`,
-       '' AS `restrictList`,
-       '' AS `url`,
-       '' AS `html`,
+       NULL AS `restrictList`,
+       NULL AS `url`,
+       NULL AS `html`,
        `l`.`egroup_id` AS `grp`,
        0 AS `canPack`,
        concat('parent ',replace(concat(`l`.`uid`,'_gcvrg'),'-','_'),'
@@ -326,9 +330,9 @@ SELECT replace(concat(`l`.`uid`,'_f_wtrack'),'-','_') AS `tableName`,
        0 AS `useScore`,
        0 AS `private`,
        0 AS `restrictCount`,
-       '' AS `restrictList`,
-       '' AS `url`,
-       '' AS `html`,
+       NULL AS `restrictList`,
+       NULL AS `url`,
+       NULL AS `html`,
        `l`.`egroup_id` AS `grp`,
        0 AS `canPack`,
        concat('parent ',replace(concat(`l`.`uid`,'_gcvrg'),'-','_'),'
@@ -363,9 +367,9 @@ SELECT replace(concat(`l`.`uid`,'_islands'),'-','_') AS `tableName`,
        0 AS `useScore`,
        0 AS `private`,
        0 AS `restrictCount`,
-       '' AS `restrictList`,
-       '' AS `url`,
-       '' AS `html`,
+       NULL AS `restrictList`,
+       NULL AS `url`,
+       NULL AS `html`,
        `l`.`egroup_id` AS `grp`,
        1 AS `canPack`,
        concat('parent ',replace(concat(`l`.`uid`,'_ilnds'),'-','_'),'
