@@ -163,7 +163,28 @@ This file is not mandatory to be sorted.
 10. To make Genome Browser to display genome coverage tracks from bigWig files, apply patches from
 ***[biowardrobe_patched_view](https://github.com/Barski-lab/biowardrobe-analysis/tree/master/sql_patch/biowardrobe_patched_view)***
 
-11. Because the new status `"JOB_CREATED": 1010` was added into `LIBSTATUS` from `constants.py`,
+11. After applying the abovementioned SQL scripts to make **BioWardrobe** to display genome coverage tracks
+    (the old `bedGraph` and new `bigWig`) the function `addGB(tab)` from [Experiment.js](https://github.com/Barski-lab/biowardrobe/blob/master/EMS/ems/app/controller/Experiment/Experiment.js)
+    should be updated to fetch not only `_wtrack` (old genome coverage in `bedGraph` format),
+    but also `_multi_f_wtrack` and `_f_wtrack` for `bigWig` tracks.
+
+```
+    /***********************************************************************
+     * Add Genome Browser Tab
+     ***********************************************************************/
+    addGB: function (tab) {                    
+                                               
+        // This is how it was before. Works only for bedGraph track
+        // var gtbl = this.UID.replace(/-/g, '_') + '_wtrack';
+                                               
+        // This part was added for RNA-Seq genome coverage tracks                        
+        var gtbl = this.UID.replace(/-/g, '_') + '_multi_f_wtrack'; // multiwig
+        gtbl += '=full&'+this.UID.replace(/-/g, '_') + '_wtrack';   // bedGraph
+        gtbl += '=full&'+this.UID.replace(/-/g, '_') + '_f_wtrack'; // bigWig
+```
+
+
+12. Because the new status `"JOB_CREATED": 1010` was added into `LIBSTATUS` from `constants.py`,
 ***[app.css](https://github.com/Barski-lab/biowardrobe/blob/master/EMS/ems/app.css)*** file from
 ***[BioWardrobe](https://github.com/Barski-lab/biowardrobe)*** should be
 updated to display correct icon
@@ -176,7 +197,7 @@ updated to display correct icon
     ```
     > Basically you should change `gear_warning.png` to `gear_new.png` for `.gear-1-10`
 
-12. To drop all of the created by **biowardrobe-analysis** tables from BioWardrobe DB, as long as
+13. To drop all of the created by **biowardrobe-analysis** tables from BioWardrobe DB, as long as
     all of tables from Airflow DB, related to the expeminent to be restarted,
     update original ***[ForceRun.py](https://github.com/Barski-lab/biowardrobe/blob/master/scripts/ForceRun.py)***
     with the following commands
@@ -201,7 +222,7 @@ updated to display correct icon
     > The location to insert this commands can be checked from updated
       ***[ForceRun.py](https://github.com/Barski-lab/biowardrobe-analysis/blob/master/basic_analysis/ForceRun.py)***
       
-13. Update crontab job
+14. Update crontab job
     ```
         # For ChIP-Seq analysis
         */1 * * * *    . ~/.profile && run-dna-cron -c /etc/wardrobe/wardrobe -j /home/biowardrobe/cwl/jobs >> /wardrobe/tmp/RunAirflowDNA.log 2>&1
