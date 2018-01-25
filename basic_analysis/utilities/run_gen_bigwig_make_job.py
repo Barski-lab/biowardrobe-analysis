@@ -4,13 +4,16 @@ import sys
 import string
 from basic_analysis.Settings import Settings
 from basic_analysis.constants import (LIBSTATUS,
-                                      CHIP_SEQ_GEN_BIGWIG_WORKFLOW,
-                                      CHIP_SEQ_GEN_BIGWIG_TEMPLATE_JOB)
+                                      EXP_TYPE)
 from basic_analysis.biow_exceptions import BiowBasicException
 from run_gen_bigwig_func import submit_job
 from basic_analysis.DefFunctions import (raise_if_dag_exists,
                                          check_job,
                                          raise_if_table_exists)
+
+
+# Set experiment type to get correct workflow and template from EXP_TYPE
+exp_type = 'GEN-bigWig'
 
 
 # Get access to DB
@@ -40,8 +43,8 @@ for row in rows:
         # or if bigwig file the with the necessary name already exists
         submit_job (db_settings=biow_db_settings,
                    row=row,
-                   workflow=CHIP_SEQ_GEN_BIGWIG_WORKFLOW,
-                   template_job=CHIP_SEQ_GEN_BIGWIG_TEMPLATE_JOB,
+                   workflow=EXP_TYPE[exp_type][0],
+                   template_job=EXP_TYPE[exp_type][1],
                    jobs_folder=sys.argv[1]) # sys.argv[1] - path where to save generated job files
     except BiowBasicException as ex:
         print "   SKIP: generating job file for ", row[3], " - ", str(ex)

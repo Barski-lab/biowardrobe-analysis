@@ -9,12 +9,8 @@ import sys
 from biow_exceptions import BiowBasicException
 from run_dna_func import submit_job
 from constants import (LIBSTATUS,
-                       CHIP_SEQ_SE_WORKFLOW,
-                       CHIP_SEQ_SE_TEMPLATE_JOB,
-                       CHIP_SEQ_PE_WORKFLOW,
-                       CHIP_SEQ_PE_TEMPLATE_JOB)
+                       EXP_TYPE)
 from db_uploader import upload_results_to_db
-from db_upload_list import CHIP_SEQ_UPLOAD
 
 
 def main():
@@ -47,8 +43,8 @@ def main():
                        row=row,
                        raw_data=os.path.join(biow_db_settings.settings['wardrobe'], biow_db_settings.settings['preliminary']),
                        indices=os.path.join(biow_db_settings.settings['wardrobe'], biow_db_settings.settings['indices']),
-                       workflow=CHIP_SEQ_PE_WORKFLOW if 'pair' in row[0] else CHIP_SEQ_SE_WORKFLOW,
-                       template_job=CHIP_SEQ_PE_TEMPLATE_JOB if 'pair' in row[0] else CHIP_SEQ_SE_TEMPLATE_JOB,
+                       workflow=EXP_TYPE[row[0]][0],
+                       template_job=EXP_TYPE[row[0]][1],
                        threads=biow_db_settings.settings['maxthreads'],
                        jobs_folder=biow_db_settings.get_args().jobs) # path where to save generated job files
             update_status(uid=row[4],
@@ -78,7 +74,7 @@ def main():
         try:
             libstatus, libstatustxt = check_job (uid=row[1],
                                                  db_settings=biow_db_settings,
-                                                 workflow=CHIP_SEQ_PE_WORKFLOW if 'pair' in row[0] else CHIP_SEQ_SE_WORKFLOW,
+                                                 workflow=EXP_TYPE[row[0]][0],
                                                  jobs_folder=biow_db_settings.get_args().jobs) # path where to save generated job files
             if libstatus:
                 update_status(uid=row[1],
@@ -97,7 +93,7 @@ def main():
                                   code=libstatus,
                                   db_settings=biow_db_settings,
                                   optional_column="dateanalyzee=now()") # Set the date of last analysis
-                    upload_results_to_db(upload_set=CHIP_SEQ_UPLOAD,
+                    upload_results_to_db(upload_set=EXP_TYPE[row[0]][2],
                                          uid=row[1],
                                          raw_data=os.path.join(biow_db_settings.settings['wardrobe'], biow_db_settings.settings['preliminary']),
                                          db_settings=biow_db_settings)

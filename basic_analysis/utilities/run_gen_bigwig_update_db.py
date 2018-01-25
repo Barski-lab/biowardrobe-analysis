@@ -4,12 +4,16 @@ import sys
 import os
 import string
 from basic_analysis.Settings import Settings
-from basic_analysis.constants import LIBSTATUS
+from basic_analysis.constants import (LIBSTATUS,
+                                      EXP_TYPE)
 from basic_analysis.biow_exceptions import BiowBasicException
 from basic_analysis.DefFunctions import (raise_if_table_exists,
                                          raise_if_file_absent)
 from basic_analysis.db_uploader import upload_results_to_db
-from basic_analysis.db_upload_list import CHIP_SEQ_GEN_BIGWIG_UPLOAD
+
+
+# Set experiment type to get correct upload list from EXP_TYPE
+exp_type = 'GEN-bigWig'
 
 
 # Get access to DB
@@ -33,7 +37,7 @@ for row in rows:
     try:
         raise_if_table_exists (db_settings=biow_db_settings, uid=row[3], table=string.replace(row[3], "-", "_") + "_f_wtrack", db=row[1])
         raise_if_file_absent (row[3],os.path.join(os.path.join(biow_db_settings.settings['wardrobe'], biow_db_settings.settings['preliminary']), row[3], row[3] + '.bigWig'))
-        upload_results_to_db(upload_set=CHIP_SEQ_GEN_BIGWIG_UPLOAD,
+        upload_results_to_db(upload_set=EXP_TYPE[exp_type][2],
                              uid=row[3],
                              raw_data=os.path.join(biow_db_settings.settings['wardrobe'], biow_db_settings.settings['preliminary']),
                              db_settings=biow_db_settings)
