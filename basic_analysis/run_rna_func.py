@@ -5,8 +5,7 @@ import collections
 from biow_exceptions import (BiowFileNotFoundException,
                              BiowJobException,
                              BiowWorkflowException)
-from constants import (LIBSTATUS,
-                       STAR_INDICES,
+from constants import (STAR_INDICES,
                        BOWTIE_INDICES,
                        RIBO_SUFFIX,
                        CHR_LENGTH_GENERIC_TSV,
@@ -23,15 +22,17 @@ def submit_job(db_settings, row, raw_data, indices, workflow, template_job, thre
     kwargs = {
         "pair": ('pair' in row[0]),
         "dUTP": ('dUTP' in row[0]),
-        "uid": row[1],
-        "genome_db": row[2],            # not used
-        "genome": row[3],
-        "annotation": row[4],           # not used
-        "annottable": row[5],           # not used
-        "spike": ('spike' in row[6]),
-        "forcerun": (int(row[7]) == 1),
-        "clip_5p_end": int(row[8]),
-        "clip_3p_end": int(row[9]),
+        "workflow": row[1],
+        "template": row[2],
+        "uid": row[3],
+        "genome_db": row[4],            # not used
+        "genome": row[5],
+        "annotation": row[6],           # not used
+        "annottable": row[7],           # not used
+        "spike": ('spike' in row[8]),
+        "forcerun": (int(row[9]) == 1),
+        "clip_5p_end": int(row[10]),
+        "clip_3p_end": int(row[11]),
         "raw_data": raw_data,
         "indices": indices,
         "workflow": workflow,
