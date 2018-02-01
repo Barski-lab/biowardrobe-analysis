@@ -15,14 +15,12 @@ from constants import (STAR_INDICES,
                        ANNOTATION_GENERIC_TSV)
 
 
-def submit_job(db_settings, row, raw_data, indices, workflow, template_job, threads, jobs_folder):
+def submit_job(db_settings, row, raw_data, indices, threads, jobs_folder):
     """Generate and export job file to a specific folder"""
-    jobs_folder = jobs_folder if os.path.isabs(jobs_folder) else os.path.join(os.getcwd(),jobs_folder)
-    workflow = os.path.splitext(os.path.basename(workflow))[0]
     kwargs = {
         "pair": ('pair' in row[0]),
         "dUTP": ('dUTP' in row[0]),
-        "workflow": row[1],
+        "workflow": os.path.splitext(os.path.basename(row[1]))[0],
         "template": row[2],
         "uid": row[3],
         "genome_db": row[4],            # not used
@@ -35,10 +33,10 @@ def submit_job(db_settings, row, raw_data, indices, workflow, template_job, thre
         "clip_3p_end": int(row[11]),
         "raw_data": raw_data,
         "indices": indices,
-        "workflow": workflow,
-        "template_job": template_job,
         "threads": threads
     }
+
+    jobs_folder = jobs_folder if os.path.isabs(jobs_folder) else os.path.join(os.getcwd(), jobs_folder)
 
     # Setting values to fill in job template
     #  We always create both upstream and downstream, even if we gonna use only upstream
@@ -59,7 +57,7 @@ def submit_job(db_settings, row, raw_data, indices, workflow, template_job, thre
     if not os.path.isfile(kwargs["fastq_file_upstream"]) or (kwargs['pair'] and not os.path.isfile(kwargs["fastq_file_downstream"])):
         raise BiowFileNotFoundException(kwargs["uid"])
 
-    filled_job_object = remove_not_set_inputs(json.loads(template_job.format(**kwargs).replace("'True'",'true').replace("'False'",'false').replace('"True"','true').replace('"False"','false')))
+    filled_job_object = remove_not_set_inputs(json.loads(kwargs['template'].format(**kwargs).replace("'True'",'true').replace("'False'",'false').replace('"True"','true').replace('"False"','false')))
     filled_job_str = json.dumps(collections.OrderedDict(sorted(filled_job_object.items())),indent=4)
 
     # Check if file exists in running or new job folder

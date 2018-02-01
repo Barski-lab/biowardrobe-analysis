@@ -40,8 +40,6 @@ def main():
                        row=row,
                        raw_data=os.path.join(biow_db_settings.settings['wardrobe'], biow_db_settings.settings['preliminary']),
                        indices=os.path.join(biow_db_settings.settings['wardrobe'], biow_db_settings.settings['indices']),
-                       workflow=row[1],
-                       template_job=row[2],
                        threads=biow_db_settings.settings['maxthreads'],
                        jobs_folder=biow_db_settings.get_args().jobs) # path where to save generated job files
             update_status(uid=row[3],
