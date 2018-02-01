@@ -1,7 +1,7 @@
-ALTER TABLE experimenttype ADD workflow VARCHAR(255) CHARACTER SET utf8, ADD template VARCHAR(1500) CHARACTER SET utf8;
+ALTER TABLE `ems`.`experimenttype` ADD workflow VARCHAR(255) CHARACTER SET utf8, ADD template VARCHAR(1500) CHARACTER SET utf8;
 
 # RNA-Seq
-UPDATE experimenttype SET
+UPDATE `ems`.`experimenttype` SET
   workflow='rnaseq-se.cwl',
   template='{
     "fastq_file": {"class": "File", "location": "{fastq_file_upstream}", "format": "http://edamontology.org/format_1930"},
@@ -19,7 +19,7 @@ UPDATE experimenttype SET
 WHERE etype='RNA-Seq';
 
 # RNA-Seq dUTP
-UPDATE experimenttype SET
+UPDATE `ems`.`experimenttype` SET
   workflow='rnaseq-se-dutp.cwl',
   template='{
     "fastq_file": {"class": "File", "location": "{fastq_file_upstream}", "format": "http://edamontology.org/format_1930"},
@@ -37,7 +37,7 @@ UPDATE experimenttype SET
 WHERE etype='RNA-Seq dUTP';
 
 # RNA-Seq pair
-UPDATE experimenttype SET
+UPDATE `ems`.`experimenttype` SET
   workflow='rnaseq-pe.cwl',
   template='{
     "fastq_file_upstream": {"class": "File", "location": "{fastq_file_upstream}", "format": "http://edamontology.org/format_1930"},
@@ -56,7 +56,7 @@ UPDATE experimenttype SET
 WHERE etype='RNA-Seq pair';
 
 # RNA-Seq dUTP pair
-UPDATE experimenttype SET
+UPDATE `ems`.`experimenttype` SET
   workflow='rnaseq-pe-dutp.cwl',
   template='{
     "fastq_file_upstream": {"class": "File", "location": "{fastq_file_upstream}", "format": "http://edamontology.org/format_1930"},
@@ -75,7 +75,7 @@ UPDATE experimenttype SET
 WHERE etype='RNA-Seq dUTP pair';
 
 # DNA-Seq
-UPDATE experimenttype SET
+UPDATE `ems`.`experimenttype` SET
   workflow='chipseq-se.cwl',
   template='{
     "fastq_file": {"class": "File", "location": "{fastq_file_upstream}", "format": "http://edamontology.org/format_1930"},
@@ -97,7 +97,7 @@ UPDATE experimenttype SET
 WHERE etype='DNA-Seq';
 
 # DNA-Seq pair
-UPDATE experimenttype SET
+UPDATE `ems`.`experimenttype` SET
   workflow='chipseq-pe.cwl',
   template='{
     "fastq_file_upstream": {"class": "File", "location": "{fastq_file_upstream}", "format": "http://edamontology.org/format_1930"},
