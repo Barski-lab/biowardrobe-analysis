@@ -163,9 +163,8 @@ This file is not mandatory to be sorted.
 10. To make Genome Browser to display genome coverage tracks from bigWig files, apply patches from
 ***[biowardrobe_patched_view](https://github.com/Barski-lab/biowardrobe-analysis/tree/master/sql_patch/biowardrobe_patched_view)***
 
-11. To run basic analysis `ems.experimenttype` table should be update with the script
-    ***[experimenttype_patch.sql](https://github.com/Barski-lab/biowardrobe-analysis/blob/master/sql_patch/biowardrobe_alter_table/experimenttype_patch.sql)***.
-    If columns `workflow` or `template` are already present in a table, delete them before running the script
+11. To run basic analysis `ems.experimenttype` table should be update with the script ***[experimenttype_patch.sql](https://github.com/Barski-lab/biowardrobe-analysis/blob/master/sql_patch/biowardrobe_alter_table/experimenttype_patch.sql)*** .
+    If columns `workflow` or `template` already exist in a table, delete them before running the script
 
 12. After applying the abovementioned SQL scripts to make **BioWardrobe** to display genome coverage tracks
     (the old `bedGraph` and new `bigWig`) the function `addGB(tab)` from [Experiment.js](https://github.com/Barski-lab/biowardrobe/blob/master/EMS/ems/app/controller/Experiment/Experiment.js)
