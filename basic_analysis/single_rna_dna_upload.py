@@ -6,7 +6,7 @@ from db_uploader import upload_results_to_db
 from single_settings import DBSettings
 
 
-def get_job(id, connection):
+def upload_job(id, connection):
     db_settings = DBSettings(connection)
     db_settings.cursor.execute((
         "select e.etype, e.workflow, e.template, l.uid, l.libstatustxt "
