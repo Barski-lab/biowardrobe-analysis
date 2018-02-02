@@ -52,7 +52,7 @@ def get_job(id, connection):
         "from labdata l "
         "inner join (experimenttype e,genome g ) ON (e.id=experimenttype_id and g.id=genome_id) "
         "LEFT JOIN (antibody a) ON (l.antibody_id=a.id) "
-        "where l.id={} and deleted=0 and COALESCE(egroup_id,'') <> '' and COALESCE(name4browser,'') <> '' "
+        "where l.id={} and e.etype like 'DNA%' and deleted=0 and COALESCE(egroup_id,'') <> '' and COALESCE(name4browser,'') <> '' "
         "order by control DESC,dateadd").format(id))
     return make_job(row=db_settings.cursor.fetchone(),
                    raw_data=os.path.join(db_settings.settings['wardrobe'], db_settings.settings['preliminary']),

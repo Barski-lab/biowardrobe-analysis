@@ -52,7 +52,7 @@ def get_job(id, connection):
         "select e.etype, e.workflow, e.template, l.uid, g.db, g.findex, g.annotation, g.annottable, g.genome, l.forcerun, "
         "COALESCE(l.trim5,0), COALESCE(l.trim3,0) "
         "from labdata l, experimenttype e, genome g "
-        "where l.id= {} and e.id=experimenttype_id and g.id=genome_id "
+        "where l.id= {} and e.id=experimenttype_id and g.id=genome_id and e.etype like 'RNA%' "
         "and COALESCE(egroup_id,'') <> '' and COALESCE(name4browser,'') <> '' and deleted=0 "
         "order by dateadd").format(id))
     return make_job(row=db_settings.cursor.fetchone(),
