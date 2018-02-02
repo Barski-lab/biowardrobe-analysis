@@ -76,7 +76,7 @@ def submit_job(db_settings, row, raw_data, indices, threads, jobs_folder):
     if not os.path.isfile(kwargs["fastq_file_upstream"]) or (kwargs['pair'] and not os.path.isfile(kwargs["fastq_file_downstream"])):
         raise BiowFileNotFoundException(kwargs["uid"])
 
-    filled_job_object = remove_not_set_inputs(json.loads(kwargs['template'].format(**kwargs).replace("'True'",'true').replace("'False'",'false').replace('"True"','true').replace('"False"','false')))
+    filled_job_object = remove_not_set_inputs(json.loads(kwargs['template'].replace('\n', ' ').format(**kwargs).replace("'True'",'true').replace("'False'",'false').replace('"True"','true').replace('"False"','false')))
     filled_job_str = json.dumps(collections.OrderedDict(sorted(filled_job_object.items())),indent=4)
 
     # Check if file exists in job folder (running or new)
