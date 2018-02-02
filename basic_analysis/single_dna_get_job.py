@@ -11,7 +11,7 @@ from constants import (BOWTIE_INDICES,
                        ANNOTATION_GENERIC_TSV)
 
 
-def gen_job(row, raw_data, indices, threads):
+def make_job(row, raw_data, indices, threads):
     kwargs = {
         "pair": ('pair' in row[0]),
         "workflow": os.path.splitext(os.path.basename(row[1]))[0],
@@ -54,7 +54,7 @@ def get_job(id, connection):
         "LEFT JOIN (antibody a) ON (l.antibody_id=a.id) "
         "where l.id={} and deleted=0 and COALESCE(egroup_id,'') <> '' and COALESCE(name4browser,'') <> '' "
         "order by control DESC,dateadd").format(id))
-    return gen_job(row=db_settings.cursor.fetchone(),
+    return make_job(row=db_settings.cursor.fetchone(),
                    raw_data=os.path.join(db_settings.settings['wardrobe'], db_settings.settings['preliminary']),
                    indices=os.path.join(db_settings.settings['wardrobe'], db_settings.settings['indices']),
                    threads=db_settings.settings['maxthreads'])

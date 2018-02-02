@@ -14,7 +14,7 @@ from constants import (BOWTIE_INDICES,
 
 
 
-def gen_job(row, raw_data, indices, threads):
+def make_job(row, raw_data, indices, threads):
     kwargs = {
         "pair": ('pair' in row[0]),
         "dUTP": ('dUTP' in row[0]),
@@ -55,7 +55,7 @@ def get_job(id, connection):
         "where l.id= {} and e.id=experimenttype_id and g.id=genome_id "
         "and COALESCE(egroup_id,'') <> '' and COALESCE(name4browser,'') <> '' and deleted=0 "
         "order by dateadd").format(id))
-    return gen_job(row=db_settings.cursor.fetchone(),
+    return make_job(row=db_settings.cursor.fetchone(),
                    raw_data=os.path.join(db_settings.settings['wardrobe'], db_settings.settings['preliminary']),
                    indices=os.path.join(db_settings.settings['wardrobe'], db_settings.settings['indices']),
                    threads=db_settings.settings['maxthreads'])
