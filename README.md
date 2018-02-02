@@ -163,7 +163,11 @@ This file is not mandatory to be sorted.
 10. To make Genome Browser to display genome coverage tracks from bigWig files, apply patches from
 ***[biowardrobe_patched_view](https://github.com/Barski-lab/biowardrobe-analysis/tree/master/sql_patch/biowardrobe_patched_view)***
 
-11. After applying the abovementioned SQL scripts to make **BioWardrobe** to display genome coverage tracks
+11. To run basic analysis `ems.experimenttype` table should be update with the script
+    ***[experimenttype_patch.sql](https://github.com/Barski-lab/biowardrobe-analysis/blob/master/sql_patch/biowardrobe_alter_table/experimenttype_patch.sql)***.
+    If columns `workflow` or `template` are already present in a table, delete them before running the script
+
+12. After applying the abovementioned SQL scripts to make **BioWardrobe** to display genome coverage tracks
     (the old `bedGraph` and new `bigWig`) the function `addGB(tab)` from [Experiment.js](https://github.com/Barski-lab/biowardrobe/blob/master/EMS/ems/app/controller/Experiment/Experiment.js)
     should be updated to fetch not only `_wtrack` (old genome coverage in `bedGraph` format),
     but also `_multi_f_wtrack` and `_f_wtrack` for `bigWig` tracks.
@@ -184,7 +188,7 @@ This file is not mandatory to be sorted.
 ```
 
 
-12. Because the new status `"JOB_CREATED": 1010` was added into `LIBSTATUS` from `constants.py`,
+13. Because the new status `"JOB_CREATED": 1010` was added into `LIBSTATUS` from `constants.py`,
 ***[app.css](https://github.com/Barski-lab/biowardrobe/blob/master/EMS/ems/app.css)*** file from
 ***[BioWardrobe](https://github.com/Barski-lab/biowardrobe)*** should be
 updated to display correct icon
@@ -197,7 +201,7 @@ updated to display correct icon
     ```
     > Basically you should change `gear_warning.png` to `gear_new.png` for `.gear-1-10`
 
-13. To drop all of the created by **biowardrobe-analysis** tables from BioWardrobe DB, as long as
+14. To drop all of the created by **biowardrobe-analysis** tables from BioWardrobe DB, as long as
     all of tables from Airflow DB, related to the expeminent to be restarted,
     update original ***[ForceRun.py](https://github.com/Barski-lab/biowardrobe/blob/master/scripts/ForceRun.py)***
     with the following commands
@@ -222,7 +226,7 @@ updated to display correct icon
     > The location to insert this commands can be checked from updated
       ***[ForceRun.py](https://github.com/Barski-lab/biowardrobe-analysis/blob/master/basic_analysis/ForceRun.py)***
       
-14. Update crontab job
+15. Update crontab job
     ```
         # For ChIP-Seq analysis
         */1 * * * *    . ~/.profile && run-dna-cron -c /etc/wardrobe/wardrobe -j /home/biowardrobe/cwl/jobs >> /wardrobe/tmp/RunAirflowDNA.log 2>&1
