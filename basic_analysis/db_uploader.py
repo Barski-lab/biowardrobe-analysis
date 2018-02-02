@@ -26,6 +26,7 @@ def upload_results_to_db (upload_set, uid, raw_data, db_settings):
 
 
 def upload_macs2_fragment_stat(self, uid, filename):
+    print "upload_macs2_fragment_stat", uid, filename
     self.db_settings.use_ems()
     with open(filename, 'r') as input_file:
         data = input_file.read().strip().split()
@@ -35,6 +36,7 @@ def upload_macs2_fragment_stat(self, uid, filename):
 
 
 def upload_iaintersect_result(self, uid, filename):
+    print "upload_iaintersect_result", uid, filename
     self.db_settings.use_ems()
     warnings.filterwarnings('ignore', category=MySQLdb.Warning)
     table_name = self.db_settings.settings['experimentsdb'] + '.`' + uid + '_islands`'
@@ -112,6 +114,7 @@ def upload_iaintersect_result(self, uid, filename):
 
 
 def upload_get_stat (self, uid, filename):
+    print "upload_get_stat", uid, filename
     # for DNA: TOTAL, ALIGNED, SUPRESSED, USED       > TOTAL, ALIGNED, SUPRESSED, SUPRESSED, USED
     # for RNA: TOTAL, ALIGNED, RIBO, SUPRESSED, USED > TOTAL, ALIGNED, RIBO, SUPRESSED, USED
     self.db_settings.use_ems()
@@ -214,6 +217,7 @@ def upload_rpkm (self, uid, filename):
 
 
 def upload_atdp(self, uid, filename):
+    print "upload_atdp", uid, filename
     warnings.filterwarnings('ignore', category=MySQLdb.Warning)
     table_name = self.db_settings.settings['experimentsdb'] + '.`' + uid + '_atdp`'
     self.db_settings.cursor.execute("DROP TABLE IF EXISTS " + table_name)
@@ -235,6 +239,7 @@ def upload_atdp(self, uid, filename):
 
 
 def upload_bigwig (self, uid, filename, strand=None):
+    print "upload_bigwig", uid, filename, strand
     self.db_settings.use_ems()
     self.db_settings.cursor.execute("SELECT g.db FROM labdata l INNER JOIN genome g ON g.id=genome_id WHERE uid=%s", (uid,))
     db_tuple = self.db_settings.cursor.fetchone()
@@ -261,12 +266,14 @@ def upload_bigwig_downstream (self, uid, filename):
 
 
 def upload_dateanalyzed(self, uid, filename):
+    print "upload_dateanalyzed", uid, filename
     self.db_settings.use_ems()
     self.db_settings.cursor.execute("update labdata set dateanalyzed=now() where uid=%s and dateanalyzed is null", (uid,))
     self.db_settings.conn.commit()
 
 
 def upload_folder_size(self, uid, filename):
+    print "upload_folder_size", uid, filename
     self.db_settings.use_ems()
     total_size = 0
     for root, dirs, files in os.walk(os.path.dirname(filename)):
@@ -277,6 +284,7 @@ def upload_folder_size(self, uid, filename):
     self.db_settings.conn.commit()
 
 def delete_files(self, uid, filename):
+    print "delete_files", uid, filename
     for item_file in glob.glob(filename):
         os.remove(item_file)
 
