@@ -38,7 +38,7 @@ def make_job(row, raw_data, indices, threads):
     kwargs["chrom_length"] = os.path.join(kwargs["indices"], BOWTIE_INDICES, kwargs["genome"], CHR_LENGTH_GENERIC_TSV)
     kwargs["annotation_input_file"] = os.path.join(kwargs["indices"], ANNOTATIONS, kwargs["genome"],ANNOTATION_GENERIC_TSV)
     kwargs["output_folder"] = os.path.join(kwargs["raw_data"], kwargs["uid"])
-    kwargs["control_file"] = os.path.join(kwargs['raw_data'],kwargs['control_id'],kwargs['control_id']+'.bam')
+    kwargs["control_file"] = os.path.join(kwargs['raw_data'],kwargs['control_id'],kwargs['control_id']+'.bam') if kwargs['control_id'] else None
     filled_job_object = remove_not_set_inputs(json.loads(kwargs['template'].replace('\n', ' ').format(**kwargs).replace("'True'", 'true').replace("'False'",'false').replace('"True"', 'true').replace('"False"', 'false')))
     return json.dumps(collections.OrderedDict(sorted(filled_job_object.items())), indent=4)
 
