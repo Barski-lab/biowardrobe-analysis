@@ -4,7 +4,8 @@ def dummy():
 
 def get_db_settings (connection):
     settings = {}
-    connection.cursor().execute ("select * from settings")
+    cursor = connection.cursor()
+    cursor.execute ("select * from settings")
     for (key,value,descr,stat,group) in connection.cursor().fetchall():
         if key in ['advanced','bin','indices','preliminary','temp','upload']:
             value = value.lstrip('/')
