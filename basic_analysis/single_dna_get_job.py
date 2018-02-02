@@ -4,7 +4,7 @@ import os
 import json
 import collections
 from DefFunctions import remove_not_set_inputs
-from single_settings import get_db_settings
+from single_settings import DBSettings
 from constants import (BOWTIE_INDICES,
                        ANNOTATIONS,
                        CHR_LENGTH_GENERIC_TSV,
@@ -44,7 +44,7 @@ def make_job(row, raw_data, indices, threads):
 
 
 def get_job(id, connection):
-    db_settings = get_db_settings(connection)
+    db_settings = DBSettings(connection)
     db_settings.cursor.execute((
         "select e.etype, e.workflow, e.template, g.db, g.findex, g.annotation, l.uid, fragmentsizeexp, fragmentsizeforceuse, forcerun, "
         "COALESCE(l.trim5,0), COALESCE(l.trim3,0),COALESCE(a.properties,0), COALESCE(l.rmdup,0),g.gsize, "

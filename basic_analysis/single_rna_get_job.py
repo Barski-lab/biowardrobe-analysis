@@ -4,7 +4,7 @@ import os
 import json
 import collections
 from DefFunctions import remove_not_set_inputs
-from single_settings import get_db_settings
+from single_settings import DBSettings
 from constants import (BOWTIE_INDICES,
                        RIBO_SUFFIX,
                        STAR_INDICES,
@@ -47,7 +47,7 @@ def make_job(row, raw_data, indices, threads):
 
 
 def get_job(id, connection):
-    db_settings = get_db_settings(connection)
+    db_settings = DBSettings(connection)
     db_settings.cursor.execute((
         "select e.etype, e.workflow, e.template, l.uid, g.db, g.findex, g.annotation, g.annottable, g.genome, l.forcerun, "
         "COALESCE(l.trim5,0), COALESCE(l.trim3,0) "

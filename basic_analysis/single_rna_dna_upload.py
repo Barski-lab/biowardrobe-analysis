@@ -3,11 +3,11 @@
 import os
 from constants import (EXP_TYPE_UPLOAD)
 from db_uploader import upload_results_to_db
-from single_settings import get_db_settings
+from single_settings import DBSettings
 
 
 def get_job(id, connection):
-    db_settings = get_db_settings(connection)
+    db_settings = DBSettings(connection)
     db_settings.cursor.execute((
         "select e.etype, e.workflow, e.template, l.uid, l.libstatustxt "
         "from labdata l "

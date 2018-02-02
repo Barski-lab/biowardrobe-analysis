@@ -1,19 +1,15 @@
-def dummy():
-    pass
+class DBSettings:
 
+    def __init__(self, connection):
+        self.settings = {}
+        self.conn = connection
+        self.cursor = connection.cursor()
+        self.cursor.execute ("select * from settings")
 
-def get_db_settings (connection):
-    settings = {}
-    cursor = connection.cursor()
-    cursor.execute ("select * from settings")
-    for (key,value,descr,stat,group) in cursor.fetchall():
-        if key in ['advanced','bin','indices','preliminary','temp','upload']:
-            value = value.lstrip('/')
-        settings[key] = value
+        for (key,value,descr,stat,group) in cursor.fetchall():
+            if key in ['advanced','bin','indices','preliminary','temp','upload']:
+                value = value.lstrip('/')
+            self.settings[key] = value
 
-    return {
-        "use_ems": dummy,
-        "settings": settings,
-        "cursor": cursor,
-        "conn": connection
-    }
+    def use_ems(self):
+        pass
